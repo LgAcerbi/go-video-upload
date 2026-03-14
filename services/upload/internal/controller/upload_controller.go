@@ -10,6 +10,10 @@ import (
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/service"
 )
 
+type UploadResponse struct {
+	Key string `json:"key"`
+}
+
 type UploadController struct {
 	svc    *service.UploadService
 	logger logger.Logger
@@ -19,6 +23,18 @@ func NewUploadController(svc *service.UploadService, log logger.Logger) *UploadC
 	return &UploadController{svc: svc, logger: log}
 }
 
+// HandleUpload uploads a file via multipart form.
+//
+// @Summary      Upload a file
+// @Description  Upload a file. Use multipart form with field name `file`. Accepted extensions are service-defined (e.g. video formats).
+// @Tags         upload
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        file  formData  file  true  "File to upload"
+// @Success      201  {object}  controller.UploadResponse  "Created, returns object key"
+// @Failure      400  {string}  string  "Bad request (e.g. invalid extension)"
+// @Failure      500  {string}  string  "Internal server error"
+// @Router       /upload [post]
 func (c *UploadController) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)

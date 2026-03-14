@@ -7,8 +7,10 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
+	_ "github.com/LgAcerbi/go-video-upload/services/upload/docs"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/controller"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/repository"
@@ -16,7 +18,13 @@ import (
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/service"
 )
 
+// @title           Upload Service API
+// @version         1.0
+// @description     API for uploading video files to object storage (S3 or MinIO).
+// @host            localhost:8080
+// @BasePath        /
 func main() {
+
 	log := logger.New(&logger.Config{Service: "upload"})
 
 	port := os.Getenv("PORT")
@@ -61,6 +69,7 @@ func main() {
 
 	r := chi.NewRouter()
 	routes.RegisterUploadRoutes(r, uploadController)
+	r.Get("/docs/*", httpSwagger.WrapHandler)
 
 	addr := ":" + port
 	log.Info("upload service listening", "addr", addr)
