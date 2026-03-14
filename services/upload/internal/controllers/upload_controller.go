@@ -7,11 +7,21 @@ import (
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/service"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/services"
 )
 
 type UploadResponse struct {
 	Key string `json:"key"`
+}
+
+type PresignRequest struct {
+	UserID string `json:"user_id"`
+	Title  string `json:"title"`
+}
+
+type PresignResponse struct {
+	UploadURL string `json:"upload_url"`
+	VideoID   string `json:"video_id"`
 }
 
 type UploadController struct {
@@ -74,4 +84,41 @@ func (c *UploadController) HandleUpload(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(map[string]string{"key": key})
+}
+
+// HandlePresign returns a presigned URL for client-side upload. Creates video and upload records.
+//
+// @Summary      Request presigned upload URL
+// @Description  Returns a presigned PUT URL and video_id. Client uploads the file with PUT to the URL. Body: user_id, title.
+// @Tags         upload
+// @Accept       json
+// @Produce      json
+// @Param        body  body  controller.PresignRequest  true  "user_id and title"
+// @Success      200   {object}  controller.PresignResponse
+// @Failure      400   {string}  string  "Bad request (e.g. missing user_id)"
+// @Failure      500   {string}  string  "Internal server error"
+// @Router       /upload/presign [post]
+func (c *UploadController) HandlePresign(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req PresignRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+	uploadURL, videoID, err := c.svc.RequestPresignURL(r.Context(), req.UserID, req.Title)
+	if err != nil {
+		c.logger.Error("presign failed", "user_id", req.UserID, "error", err)
+		if errors.Is(err, service.ErrInvalidPresignRequest) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		http.Error(w, "failed to create presigned URL", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(PresignResponse{UploadURL: uploadURL, VideoID: videoID})
 }
