@@ -1,0 +1,21 @@
+services:
+  upload:
+    build:
+      context: ..
+      dockerfile: services/upload/Dockerfile
+    ports:
+      - "8080:8080"
+
+  metadata:
+    build:
+      context: ..
+      dockerfile: services/metadata/Dockerfile
+    ports:
+      - "50051:50051"
+
+  transcoding:
+    build:
+      context: ..
+      dockerfile: services/transcoding/Dockerfile
+    ports:
+      - "50052:50052"
