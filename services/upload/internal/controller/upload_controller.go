@@ -5,16 +5,18 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/LgAcerbi/go-video-upload/pkg/logger"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/service"
 )
 
 type UploadController struct {
-	svc *service.UploadService
+	svc    *service.UploadService
+	logger logger.Logger
 }
 
-func NewUploadController(svc *service.UploadService) *UploadController {
-	return &UploadController{svc: svc}
+func NewUploadController(svc *service.UploadService, log logger.Logger) *UploadController {
+	return &UploadController{svc: svc, logger: log}
 }
 
 func (c *UploadController) HandleUpload(w http.ResponseWriter, r *http.Request) {
@@ -43,13 +45,16 @@ func (c *UploadController) HandleUpload(w http.ResponseWriter, r *http.Request) 
 	key, err := c.svc.UploadFile(r.Context(), header.Filename, file, header.Size, contentType)
 	if err != nil {
 		if errors.Is(err, domain.ErrInvalidExtension) {
+			c.logger.Info("upload rejected: invalid extension", "filename", header.Filename)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+		c.logger.Error("upload failed", "filename", header.Filename, "error", err)
 		http.Error(w, "upload failed", http.StatusInternalServerError)
 		return
 	}
 
+	c.logger.Info("file uploaded", "key", key, "filename", header.Filename)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	_ = json.NewEncoder(w).Encode(map[string]string{"key": key})

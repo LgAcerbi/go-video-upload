@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/LgAcerbi/go-video-upload/pkg/logger"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/controller"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/repository"
@@ -17,6 +17,8 @@ import (
 )
 
 func main() {
+	log := logger.New(&logger.Config{Service: "upload"})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -48,22 +50,22 @@ func main() {
 		}
 		storage, err = repository.NewS3Storage(ctx, s3Cfg)
 	default:
-		log.Fatalf("OBJECT_STORAGE must be S3 or MINIO, got %q", objectStorage)
+		log.Fatal("OBJECT_STORAGE must be S3 or MINIO", "got", objectStorage)
 	}
 	if err != nil {
-		log.Fatalf("storage: %v", err)
+		log.Fatal("storage init failed", "error", err)
 	}
 
 	uploadSvc := service.NewUploadService(storage, bucket)
-	uploadController := controller.NewUploadController(uploadSvc)
+	uploadController := controller.NewUploadController(uploadSvc, log)
 
 	r := chi.NewRouter()
 	routes.RegisterUploadRoutes(r, uploadController)
 
 	addr := ":" + port
-	log.Printf("upload service listening on %s", addr)
+	log.Info("upload service listening", "addr", addr)
 	if err := http.ListenAndServe(addr, r); err != nil {
-		log.Fatalf("server failed: %v", err)
+		log.Fatal("server failed", "error", err)
 	}
 }
 
