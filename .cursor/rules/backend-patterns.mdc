@@ -1,0 +1,181 @@
+---
+alwaysApply: false
+---
+# Go Services — Clean Architecture Guidelines
+
+When adding or editing code in services (`upload`, `metadata`, `transcoding`), follow clean architecture and the structure below. Use **services/upload** as the reference for REST and **services/metadata** or **services/transcoding** for gRPC.
+
+## 1. Folder structure
+
+```
+services/<service-name>/
+  cmd/
+    server/
+      main.go              # Entry: load config, wire dependencies, start HTTP or gRPC server
+  internal/
+    domain/                # Domain entities (structs, validation, no external deps)
+    ports/                 # Outbound interfaces (e.g. repository interfaces)
+    service/               # Application services (depend on ports, use domain)
+    handler/               # Transport: HTTP handlers or gRPC server implementations
+    repository/            # Persistence: concrete implementations of ports
+```
+
+- **Entry** (`cmd/server/main.go`): Load config (env or flags), build repository → service → handler, then start the HTTP server or gRPC server. No business logic in main.
+- **Composition**: In main, instantiate concrete repositories, inject them into services, then inject services into handlers. Handlers and services depend only on interfaces (ports), not on concrete packages.
+
+## 2. Domain entities
+
+- Place under `internal/domain/`; one file per entity (e.g. `video.go`, `job.go`).
+- **Structs** with **exported** fields only when necessary; prefer constructors and getters to keep invariants.
+- **Constructor**: `func NewX(...) (*X, error)` for new aggregates (validate, then return). Or a factory in a separate package if needed.
+- **Reconstitute**: `func ReconstituteX(id string, ...) *X` for loading from persistence (no validation, no ID generation).
+- No dependency on frameworks, DB, or HTTP/gRPC. Domain may depend only on standard library or shared **pkg** (e.g. `pkg/models` for shared value objects).
+- Package: `package domain`; export types and constructors.
+
+```go
+// Example shape
+package domain
+
+type Video struct {
+    id        string
+    path      string
+    createdAt time.Time
+}
+
+func NewVideo(path string) (*Video, error) {
+    if path == "" {
+        return nil, errors.New("path required")
+    }
+    return &Video{id: uuid.New().String(), path: path, createdAt: time.Now()}, nil
+}
+
+func ReconstituteVideo(id, path string, createdAt time.Time) *Video {
+    return &Video{id: id, path: path, createdAt: createdAt}
+}
+
+func (v *Video) ID() string   { return v.id }
+func (v *Video) Path() string { return v.path }
+```
+
+## 3. Ports (outbound interfaces)
+
+- Place under `internal/ports/`; one file per aggregate or per concern (e.g. `video_repository.go`).
+- **Interfaces** only; methods take/return **domain entities** or primitives (e.g. `Save(ctx, *domain.Video) error`, `FindByID(ctx, id string) (*domain.Video, error)`).
+- Name interfaces by role: `VideoRepository`, `MetadataExtractor`, `QueuePublisher`. Suffix with the role (Repository, Client, etc.).
+- Ports are implemented by adapters in `internal/repository/` (or `internal/gateway/` for external APIs).
+
+```go
+// internal/ports/video_repository.go
+package ports
+
+import (
+    "context"
+    "github.com/video-processing/services/upload/internal/domain"
+)
+
+type VideoRepository interface {
+    Save(ctx context.Context, v *domain.Video) error
+    FindByID(ctx context.Context, id string) (*domain.Video, error)
+}
+```
+
+## 4. Application services
+
+- One file (or one per aggregate) under `internal/service/` (e.g. `upload_service.go`, `metadata_service.go`).
+- **Constructor** receives **port interfaces** (e.g. `VideoRepository`), not concrete types.
+- Methods: use domain constructors/reconstitute, call ports; return domain or errors. Use `fmt.Errorf("video with id %q not found", id)` or sentinel errors for “not found”.
+- No HTTP, gRPC, or database types here; only domain, ports, and standard library (or shared `pkg`).
+- Package: `package service`.
+
+```go
+// internal/service/upload_service.go
+package service
+
+type UploadService struct {
+    repo ports.VideoRepository
+}
+
+func NewUploadService(repo ports.VideoRepository) *UploadService {
+    return &UploadService{repo: repo}
+}
+
+func (s *UploadService) CreateVideo(ctx context.Context, path string) (*domain.Video, error) {
+    v, err := domain.NewVideo(path)
+    if err != nil {
+        return nil, err
+    }
+    if err := s.repo.Save(ctx, v); err != nil {
+        return nil, err
+    }
+    return v, nil
+}
+```
+
+## 5. Handlers (transport layer)
+
+- **REST (upload)**: Under `internal/handler/`; one file per resource or group (e.g. `upload_handler.go`). Constructor receives the **service** (application layer). Handlers parse request (path, query, body), call service, then write HTTP response (status and JSON). Use standard library `net/http` or a small router (e.g. chi); avoid putting framework types in service or domain.
+- **gRPC (metadata, transcoding)**: Under `internal/handler/`; implement the generated gRPC server interface. Constructor receives the **service**. In each RPC method: convert proto types to domain (or DTOs), call service, convert result back to proto and return.
+- **Errors**: Map service errors to HTTP status codes (e.g. “not found” → 404, validation → 400, else 500) or to gRPC codes. Do not expose internal errors in response bodies.
+- Package: `package handler`.
+
+## 6. Repository (persistence adapter)
+
+- Under `internal/repository/`; one file per aggregate (e.g. `video_repository.go`). **Implements** the corresponding port interface from `internal/ports/`.
+- Constructor receives concrete dependencies (e.g. `*sql.DB`, Redis client). Map domain entities to/from DB rows using `domain.ReconstituteX(...)` and getters for inserts/updates.
+- Prefer soft delete (e.g. `deleted_at`); filter in all reads and in count/list methods.
+- Package: `package repository`.
+
+```go
+// internal/repository/video_repository.go
+package repository
+
+type VideoRepository struct {
+    db *sql.DB
+}
+
+func NewVideoRepository(db *sql.DB) *VideoRepository {
+    return &VideoRepository{db: db}
+}
+
+func (r *VideoRepository) Save(ctx context.Context, v *domain.Video) error {
+    // map v.ID(), v.Path(), v.CreatedAt() to INSERT/UPDATE
+}
+
+func (r *VideoRepository) FindByID(ctx context.Context, id string) (*domain.Video, error) {
+    // query row, then return domain.ReconstituteVideo(...)
+}
+```
+
+Ensure the concrete type is used only in `main.go` when wiring; the variable type for injection should be the interface (`ports.VideoRepository`).
+
+## 7. Entry and wiring (cmd/server/main.go)
+
+- **Config**: Read from env or flags (e.g. port, DB DSN). Use `pkg/config` if shared.
+- **Wire**: Instantiate repository (e.g. `repo := repository.NewVideoRepository(db)`), then service (e.g. `svc := service.NewUploadService(repo)`), then handler (e.g. `h := handler.NewUploadHandler(svc)`). Pass interfaces into services, not concrete repos.
+- **Server**: Create HTTP router or gRPC server, register handlers, then `ListenAndServe` or `Serve(lis)`.
+- Keep main short; no business logic.
+
+## 8. Naming and packages
+
+- **Entities**: `Video`, `Job`; file `video.go`, `job.go` in `internal/domain/`.
+- **Port**: `VideoRepository`; file `video_repository.go` in `internal/ports/`.
+- **Service**: `UploadService`, `MetadataService`; file `upload_service.go`, `metadata_service.go` in `internal/service/`.
+- **Handler**: `UploadHandler`, `MetadataServer` (gRPC); file `upload_handler.go`, `metadata_grpc.go` in `internal/handler/`.
+- **Repository impl**: `PostgresVideoRepository` or `VideoRepository` in `internal/repository/` implementing `ports.VideoRepository`.
+- Use **short, clear names**; avoid stuttering (e.g. `video.Video` in domain is acceptable).
+
+## 9. Shared code (pkg)
+
+- **pkg/config**: Shared config loading (env, validation).
+- **pkg/logger**: Structured logger used by handlers and repositories; avoid logging inside domain.
+- **pkg/middleware**: HTTP middleware (auth, logging, recovery); gRPC interceptors if shared.
+- **pkg/models**: Shared value objects or DTOs only if needed across services; keep domain in each service’s `internal/domain/`.
+
+## 10. Adding a new aggregate or capability
+
+1. Add entity in `internal/domain/` with constructors and getters.
+2. Add port interface in `internal/ports/` (e.g. `XRepository`).
+3. Add or extend service in `internal/service/` that depends on the new port.
+4. Add or extend handler in `internal/handler/` (HTTP or gRPC) that depends on the service.
+5. Add repository implementation in `internal/repository/` implementing the port.
+6. In `cmd/server/main.go`: instantiate the new repository, inject into service, inject service into handler, and register routes or gRPC methods.
