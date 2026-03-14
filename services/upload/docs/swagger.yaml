@@ -1,0 +1,45 @@
+basePath: /
+definitions:
+  controller.UploadResponse:
+    properties:
+      key:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for uploading video files to object storage (S3 or MinIO).
+  title: Upload Service API
+  version: "1.0"
+paths:
+  /upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a file. Use multipart form with field name `file`. Accepted
+        extensions are service-defined (e.g. video formats).
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created, returns object key
+          schema:
+            $ref: '#/definitions/controller.UploadResponse'
+        "400":
+          description: Bad request (e.g. invalid extension)
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Upload a file
+      tags:
+      - upload
+swagger: "2.0"
