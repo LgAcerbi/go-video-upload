@@ -17,8 +17,15 @@ services:
       - minio
     entrypoint: >
       /bin/sh -c "
+      echo 'Waiting for MinIO to accept connections...';
+      sleep 10;
       mc alias set myminio http://minio:9000 minioadmin minioadmin;
-      until mc ready myminio 2>/dev/null; do echo 'Waiting for MinIO...'; sleep 2; done;
+      n=0; max=60;
+      until mc ready myminio 2>/dev/null; do
+        n=$$(($$n + 1));
+        if [ $$n -ge $$max ]; then echo 'MinIO did not become ready in 2 minutes'; exit 1; fi;
+        echo 'Waiting for MinIO... ($$n/$$max)'; sleep 2;
+      done;
       mc mb myminio/videos --ignore-existing;
       echo 'Bucket videos ready';
       exit 0;
@@ -39,7 +46,7 @@ services:
       retries: 5
 
   postgres:
-    image: postgres:latest
+    image: postgres:16-alpine
     ports:
       - "5432:5432"
     environment:
@@ -53,6 +60,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   adminer:
     image: adminer:latest
@@ -82,10 +90,13 @@ services:
       RABBITMQ_PORT: "5672"
       RABBITMQ_USER: guest
       RABBITMQ_PASS: guest
+      DATABASE_URL: postgresql://admin:admin@postgres:5432/admin
     depends_on:
       minio-init:
         condition: service_completed_successfully
       rabbitmq:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   metadata:
