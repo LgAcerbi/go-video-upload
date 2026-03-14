@@ -16,12 +16,13 @@ services/<service-name>/
     domain/                # Domain entities (structs, validation, no external deps)
     ports/                 # Outbound interfaces (e.g. repository interfaces)
     service/               # Application services (depend on ports, use domain)
-    handler/               # Transport: HTTP handlers or gRPC server implementations
+    controller/            # Transport: HTTP controllers or gRPC server implementations
+    routes/                # Route registration (mount controllers on router)
     repository/            # Persistence: concrete implementations of ports
 ```
 
-- **Entry** (`cmd/server/main.go`): Load config (env or flags), build repository → service → handler, then start the HTTP server or gRPC server. No business logic in main.
-- **Composition**: In main, instantiate concrete repositories, inject them into services, then inject services into handlers. Handlers and services depend only on interfaces (ports), not on concrete packages.
+- **Entry** (`cmd/server/main.go`): Load config (env or flags), build repository → service → controller, then register routes and start the HTTP or gRPC server. No business logic in main.
+- **Composition**: In main, instantiate concrete repositories, inject them into services, then inject services into controllers. Register routes in `internal/routes/`. Controllers and services depend only on interfaces (ports), not on concrete packages.
 
 ## 2. Domain entities
 
@@ -70,7 +71,7 @@ package ports
 
 import (
     "context"
-    "github.com/video-processing/services/upload/internal/domain"
+    "github.com/LgAcerbi/go-video-upload/services/upload/internal/domain"
 )
 
 type VideoRepository interface {
@@ -111,12 +112,13 @@ func (s *UploadService) CreateVideo(ctx context.Context, path string) (*domain.V
 }
 ```
 
-## 5. Handlers (transport layer)
+## 5. Controllers and routes (transport layer)
 
-- **REST (upload)**: Under `internal/handler/`; one file per resource or group (e.g. `upload_handler.go`). Constructor receives the **service** (application layer). Handlers parse request (path, query, body), call service, then write HTTP response (status and JSON). Use standard library `net/http` or a small router (e.g. chi); avoid putting framework types in service or domain.
-- **gRPC (metadata, transcoding)**: Under `internal/handler/`; implement the generated gRPC server interface. Constructor receives the **service**. In each RPC method: convert proto types to domain (or DTOs), call service, convert result back to proto and return.
+- **Controllers**: Under `internal/controller/`; one file per resource (e.g. `upload_controller.go`). Constructor receives the **service** (application layer). Controllers parse request (path, query, body), call service, then write HTTP response (status and JSON). Use standard library `net/http`; avoid putting framework types in service or domain.
+- **Routes**: Under `internal/routes/`; one file per resource (e.g. `upload_route.go`). Each file exposes a `RegisterXRoutes(r chi.Router, c *controller.XController)` that mounts the controller’s handlers on the router. Main imports routes and calls these register functions.
+- **gRPC (metadata, transcoding)**: Under `internal/controller/`; implement the generated gRPC server interface. Constructor receives the **service**. In each RPC method: convert proto types to domain (or DTOs), call service, convert result back to proto and return.
 - **Errors**: Map service errors to HTTP status codes (e.g. “not found” → 404, validation → 400, else 500) or to gRPC codes. Do not expose internal errors in response bodies.
-- Package: `package handler`.
+- Packages: `package controller`, `package routes`.
 
 ## 6. Repository (persistence adapter)
 
@@ -151,8 +153,8 @@ Ensure the concrete type is used only in `main.go` when wiring; the variable typ
 ## 7. Entry and wiring (cmd/server/main.go)
 
 - **Config**: Read from env or flags (e.g. port, DB DSN). Use `pkg/config` if shared.
-- **Wire**: Instantiate repository (e.g. `repo := repository.NewVideoRepository(db)`), then service (e.g. `svc := service.NewUploadService(repo)`), then handler (e.g. `h := handler.NewUploadHandler(svc)`). Pass interfaces into services, not concrete repos.
-- **Server**: Create HTTP router or gRPC server, register handlers, then `ListenAndServe` or `Serve(lis)`.
+- **Wire**: Instantiate repository (e.g. `repo := repository.NewVideoRepository(db)`), then service (e.g. `svc := service.NewUploadService(repo)`), then controller (e.g. `c := controller.NewUploadController(svc)`). Call `routes.RegisterXRoutes(r, c)`. Pass interfaces into services, not concrete repos.
+- **Server**: Create HTTP router or gRPC server, register routes, then `ListenAndServe` or `Serve(lis)`.
 - Keep main short; no business logic.
 
 ## 8. Naming and packages
@@ -160,14 +162,15 @@ Ensure the concrete type is used only in `main.go` when wiring; the variable typ
 - **Entities**: `Video`, `Job`; file `video.go`, `job.go` in `internal/domain/`.
 - **Port**: `VideoRepository`; file `video_repository.go` in `internal/ports/`.
 - **Service**: `UploadService`, `MetadataService`; file `upload_service.go`, `metadata_service.go` in `internal/service/`.
-- **Handler**: `UploadHandler`, `MetadataServer` (gRPC); file `upload_handler.go`, `metadata_grpc.go` in `internal/handler/`.
+- **Controller**: `UploadController`, `MetadataServer` (gRPC); file `upload_controller.go`, `metadata_grpc.go` in `internal/controller/`.
+- **Routes**: `RegisterUploadRoutes`; file `upload_route.go` in `internal/routes/`.
 - **Repository impl**: `PostgresVideoRepository` or `VideoRepository` in `internal/repository/` implementing `ports.VideoRepository`.
 - Use **short, clear names**; avoid stuttering (e.g. `video.Video` in domain is acceptable).
 
 ## 9. Shared code (pkg)
 
 - **pkg/config**: Shared config loading (env, validation).
-- **pkg/logger**: Structured logger used by handlers and repositories; avoid logging inside domain.
+- **pkg/logger**: Structured logger used by controllers and repositories; avoid logging inside domain.
 - **pkg/middleware**: HTTP middleware (auth, logging, recovery); gRPC interceptors if shared.
 - **pkg/models**: Shared value objects or DTOs only if needed across services; keep domain in each service’s `internal/domain/`.
 
@@ -176,6 +179,7 @@ Ensure the concrete type is used only in `main.go` when wiring; the variable typ
 1. Add entity in `internal/domain/` with constructors and getters.
 2. Add port interface in `internal/ports/` (e.g. `XRepository`).
 3. Add or extend service in `internal/service/` that depends on the new port.
-4. Add or extend handler in `internal/handler/` (HTTP or gRPC) that depends on the service.
-5. Add repository implementation in `internal/repository/` implementing the port.
-6. In `cmd/server/main.go`: instantiate the new repository, inject into service, inject service into handler, and register routes or gRPC methods.
+4. Add or extend controller in `internal/controller/` (HTTP or gRPC) that depends on the service.
+5. Add or extend route registration in `internal/routes/` (e.g. `RegisterXRoutes`).
+6. Add repository implementation in `internal/repository/` implementing the port.
+7. In `cmd/server/main.go`: instantiate the new repository, inject into service, inject service into controller, call route registration, and start server.
