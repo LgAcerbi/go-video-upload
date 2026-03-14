@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package transcoding;
+
+option go_package = "github.com/LgAcerbi/go-video-upload/proto/transcoding";
+
+// Placeholder for transcoding service.

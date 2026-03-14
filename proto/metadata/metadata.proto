@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package metadata;
+
+option go_package = "github.com/LgAcerbi/go-video-upload/proto/metadata";
+
+// Placeholder for metadata extraction service.
