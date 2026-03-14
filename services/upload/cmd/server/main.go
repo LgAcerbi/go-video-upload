@@ -7,15 +7,16 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
 	_ "github.com/LgAcerbi/go-video-upload/services/upload/docs"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/controller"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/controllers"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/repository"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/repositories"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/routes"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/service"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/services"
 )
 
 // @title           Upload Service API
@@ -39,7 +40,7 @@ func main() {
 	}
 
 	objectStorage := strings.ToUpper(envOrDefault("OBJECT_STORAGE", "S3"))
-	var storage ports.FileStorage
+	var storage ports.FileStorageRepository
 	var err error
 	switch objectStorage {
 	case "MINIO":
@@ -50,13 +51,13 @@ func main() {
 			AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
 			SecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
 		}
-		storage, err = repository.NewMinIOStorage(ctx, minioCfg)
+		storage, err = repository.NewMinIOStorageRepository(ctx, minioCfg)
 	case "S3":
 		s3Cfg := repository.S3Config{
 			Region: envOrDefault("S3_REGION", "us-east-1"),
 			Bucket: bucket,
 		}
-		storage, err = repository.NewS3Storage(ctx, s3Cfg)
+		storage, err = repository.NewS3StorageRepository(ctx, s3Cfg)
 	default:
 		log.Fatal("OBJECT_STORAGE must be S3 or MINIO", "got", objectStorage)
 	}
@@ -64,7 +65,20 @@ func main() {
 		log.Fatal("storage init failed", "error", err)
 	}
 
-	uploadSvc := service.NewUploadService(storage, bucket)
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL is required")
+	}
+	pool, err := pgxpool.New(ctx, dbURL)
+	if err != nil {
+		log.Fatal("database connection failed", "error", err)
+	}
+	defer pool.Close()
+
+	videoRepo := repository.NewVideoRepository(pool)
+	uploadRepo := repository.NewUploadRepository(pool)
+
+	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo)
 	uploadController := controller.NewUploadController(uploadSvc, log)
 
 	r := chi.NewRouter()
