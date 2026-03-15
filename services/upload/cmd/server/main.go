@@ -17,12 +17,14 @@ import (
 	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
 	"github.com/LgAcerbi/go-video-upload/proto/upload"
 	_ "github.com/LgAcerbi/go-video-upload/services/upload/docs"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/controllers"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/grpcserver"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/repositories"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/routes"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/services"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/grpc"
+	controller "github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http/routes"
+	objectstorage "github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/object-storage"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/rabbitmq"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/postgres"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
 )
 
 // @title           Upload Service API
@@ -50,20 +52,20 @@ func main() {
 	var err error
 	switch objectStorage {
 	case "MINIO":
-		minioCfg := repository.MinIOConfig{
+		minioCfg := objectstorage.MinIOConfig{
 			Endpoint:        os.Getenv("S3_ENDPOINT"),
 			Region:          envOrDefault("S3_REGION", "us-east-1"),
 			Bucket:          bucket,
 			AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
 			SecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
 		}
-		storage, err = repository.NewMinIOStorageRepository(ctx, minioCfg)
+		storage, err = objectstorage.NewMinIORepository(ctx, minioCfg)
 	case "S3":
-		s3Cfg := repository.S3Config{
+		s3Cfg := objectstorage.S3Config{
 			Region: envOrDefault("S3_REGION", "us-east-1"),
 			Bucket: bucket,
 		}
-		storage, err = repository.NewS3StorageRepository(ctx, s3Cfg)
+		storage, err = objectstorage.NewS3Repository(ctx, s3Cfg)
 	default:
 		log.Fatal("OBJECT_STORAGE must be S3 or MINIO", "got", objectStorage)
 	}
@@ -81,9 +83,9 @@ func main() {
 	}
 	defer pool.Close()
 
-	videoRepo := repository.NewVideoRepository(pool)
-	uploadRepo := repository.NewUploadRepository(pool)
-	uploadStepRepo := repository.NewUploadStepRepository(pool)
+	videoRepo := postgres.NewVideoRepository(pool)
+	uploadRepo := postgres.NewUploadRepository(pool)
+	uploadStepRepo := postgres.NewUploadStepRepository(pool)
 
 	rabbitCfg := rabbitmq.ConfigFromEnv()
 	rabbitConn, err := rabbitmq.Connect(rabbitCfg)
@@ -92,13 +94,13 @@ func main() {
 	}
 	defer rabbitConn.Close()
 
-	uploadProcessPub := repository.NewRabbitMQUploadProcessPublisher(rabbitConn)
+	uploadProcessPub := amqp.NewRabbitMQUploadProcessPublisher(rabbitConn)
 
-	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo, uploadProcessPub)
+	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo, uploadStepRepo, uploadProcessPub)
 	uploadController := controller.NewUploadController(uploadSvc, log)
 
 	grpcServer := grpc.NewServer()
-	upload.RegisterUploadStateServiceServer(grpcServer, grpcserver.NewUploadStateServer(uploadRepo, uploadStepRepo, videoRepo))
+	upload.RegisterUploadStateServiceServer(grpcServer, grpcserver.NewUploadStateController(uploadSvc))
 	reflection.Register(grpcServer)
 
 	grpcPort := envOrDefault("GRPC_PORT", "9090")

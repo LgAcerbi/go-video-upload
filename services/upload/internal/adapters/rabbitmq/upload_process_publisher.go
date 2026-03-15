@@ -1,11 +1,11 @@
-package repository
+package amqp
 
 import (
 	"context"
 	"encoding/json"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
 )
 
 const uploadProcessQueueName = "upload-process"

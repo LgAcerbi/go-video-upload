@@ -1,10 +1,11 @@
-package repository
+package postgres
 
 import (
 	"context"
 
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
 )
 
 type UploadStepRepository struct {

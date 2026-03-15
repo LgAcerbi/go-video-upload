@@ -1,16 +1,16 @@
-package repository
+package objectstorage
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
 )
 
 type MinIOConfig struct {
@@ -21,12 +21,12 @@ type MinIOConfig struct {
 	SecretAccessKey string
 }
 
-type MinIOStorageRepository struct {
+type MinIORepository struct {
 	client *s3.Client
 	bucket string
 }
 
-func NewMinIOStorageRepository(ctx context.Context, cfg MinIOConfig) (*MinIOStorageRepository, error) {
+func NewMinIORepository(ctx context.Context, cfg MinIOConfig) (*MinIORepository, error) {
 	if cfg.Region == "" {
 		cfg.Region = "us-east-1"
 	}
@@ -46,10 +46,10 @@ func NewMinIOStorageRepository(ctx context.Context, cfg MinIOConfig) (*MinIOStor
 		o.BaseEndpoint = aws.String(cfg.Endpoint)
 		o.UsePathStyle = true
 	})
-	return &MinIOStorageRepository{client: client, bucket: cfg.Bucket}, nil
+	return &MinIORepository{client: client, bucket: cfg.Bucket}, nil
 }
 
-func (s *MinIOStorageRepository) Upload(ctx context.Context, input *ports.UploadInput) error {
+func (s *MinIORepository) Upload(ctx context.Context, input *ports.UploadInput) error {
 	if input == nil || input.Body == nil {
 		return fmt.Errorf("upload input and body are required")
 	}
@@ -73,7 +73,7 @@ func (s *MinIOStorageRepository) Upload(ctx context.Context, input *ports.Upload
 	return err
 }
 
-func (s *MinIOStorageRepository) PresignPut(ctx context.Context, bucket, key string, expiry time.Duration) (string, error) {
+func (s *MinIORepository) PresignPut(ctx context.Context, bucket, key string, expiry time.Duration) (string, error) {
 	if bucket == "" {
 		bucket = s.bucket
 	}

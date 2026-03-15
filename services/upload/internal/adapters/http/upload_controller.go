@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/services"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
 )
 
 type UploadResponse struct {

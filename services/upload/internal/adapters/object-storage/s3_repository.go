@@ -1,15 +1,15 @@
-package repository
+package objectstorage
 
 import (
 	"context"
 	"fmt"
 	"time"
 
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
 )
 
 type S3Config struct {
@@ -17,12 +17,12 @@ type S3Config struct {
 	Bucket string
 }
 
-type S3StorageRepository struct {
+type S3Repository struct {
 	client *s3.Client
 	bucket string
 }
 
-func NewS3StorageRepository(ctx context.Context, cfg S3Config) (*S3StorageRepository, error) {
+func NewS3Repository(ctx context.Context, cfg S3Config) (*S3Repository, error) {
 	if cfg.Region == "" {
 		cfg.Region = "us-east-1"
 	}
@@ -31,10 +31,10 @@ func NewS3StorageRepository(ctx context.Context, cfg S3Config) (*S3StorageReposi
 		return nil, fmt.Errorf("loading AWS config: %w", err)
 	}
 	client := s3.NewFromConfig(awsCfg)
-	return &S3StorageRepository{client: client, bucket: cfg.Bucket}, nil
+	return &S3Repository{client: client, bucket: cfg.Bucket}, nil
 }
 
-func (s *S3StorageRepository) Upload(ctx context.Context, input *ports.UploadInput) error {
+func (s *S3Repository) Upload(ctx context.Context, input *ports.UploadInput) error {
 	if input == nil || input.Body == nil {
 		return fmt.Errorf("upload input and body are required")
 	}
@@ -58,7 +58,7 @@ func (s *S3StorageRepository) Upload(ctx context.Context, input *ports.UploadInp
 	return err
 }
 
-func (s *S3StorageRepository) PresignPut(ctx context.Context, bucket, key string, expiry time.Duration) (string, error) {
+func (s *S3Repository) PresignPut(ctx context.Context, bucket, key string, expiry time.Duration) (string, error) {
 	if bucket == "" {
 		bucket = s.bucket
 	}

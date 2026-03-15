@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/upload": {
+        "/videos/upload": {
             "post": {
                 "description": "Upload a file. Use multipart form with field name ` + "`" + `file` + "`" + `. Accepted extensions are service-defined (e.g. video formats).",
                 "consumes": [
@@ -58,9 +58,115 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/videos/upload/presign": {
+            "post": {
+                "description": "Returns a presigned PUT URL and video_id. Client uploads the file with PUT to the URL. Body: user_id, title.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "upload"
+                ],
+                "summary": "Request presigned upload URL",
+                "parameters": [
+                    {
+                        "description": "user_id and title",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.PresignRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.PresignResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request (e.g. missing user_id)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/videos/{video_id}/upload/finalize": {
+            "post": {
+                "description": "Call after the client has uploaded the file to the presigned URL. Updates upload (storage_path, status) and sends event to upload-process queue.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "upload"
+                ],
+                "summary": "Finalize upload",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Video ID",
+                        "name": "video_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad request (e.g. upload not found or not pending)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "controller.PresignRequest": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.PresignResponse": {
+            "type": "object",
+            "properties": {
+                "upload_url": {
+                    "type": "string"
+                },
+                "video_id": {
+                    "type": "string"
+                }
+            }
+        },
         "controller.UploadResponse": {
             "type": "object",
             "properties": {

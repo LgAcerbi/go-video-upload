@@ -10,8 +10,9 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain/entities"
 )
 
 var ErrInvalidPresignRequest = errors.New("invalid presign request")
@@ -25,15 +26,17 @@ type UploadService struct {
 	bucket            string
 	videoRepo         ports.VideoRepository
 	uploadRepo        ports.UploadRepository
+	uploadStepRepo    ports.UploadStepRepository
 	uploadProcessPub  ports.UploadProcessPublisher
 }
 
-func NewUploadService(storage ports.FileStorageRepository, bucket string, videoRepo ports.VideoRepository, uploadRepo ports.UploadRepository, uploadProcessPub ports.UploadProcessPublisher) *UploadService {
+func NewUploadService(storage ports.FileStorageRepository, bucket string, videoRepo ports.VideoRepository, uploadRepo ports.UploadRepository, uploadStepRepo ports.UploadStepRepository, uploadProcessPub ports.UploadProcessPublisher) *UploadService {
 	return &UploadService{
 		storage:          storage,
 		bucket:           bucket,
 		videoRepo:        videoRepo,
 		uploadRepo:       uploadRepo,
+		uploadStepRepo:   uploadStepRepo,
 		uploadProcessPub: uploadProcessPub,
 	}
 }
@@ -68,12 +71,12 @@ func (s *UploadService) RequestPresignURL(ctx context.Context, userID, title str
 	if _, err := uuid.Parse(userID); err != nil {
 		return "", "", fmt.Errorf("%w: user_id must be a valid UUID", ErrInvalidPresignRequest)
 	}
-	video := domain.NewVideo(userID, title)
+	video := entities.NewVideo(userID, title)
 	if err := s.videoRepo.Create(ctx, video); err != nil {
 		return "", "", fmt.Errorf("create video: %w", err)
 	}
 	expiresAt := time.Now().Add(PresignExpiry)
-	upload := domain.NewUpload(video.ID, &expiresAt)
+	upload := entities.NewUpload(video.ID, &expiresAt)
 	if err := s.uploadRepo.Create(ctx, upload); err != nil {
 		return "", "", fmt.Errorf("create upload: %w", err)
 	}
@@ -95,12 +98,12 @@ func (s *UploadService) FinalizeUpload(ctx context.Context, videoID string) erro
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrFinalizeUpload, err)
 	}
-	if upload.Status != domain.UploadStatusPending {
+	if upload.Status != entities.UploadStatusPending {
 		return fmt.Errorf("%w: upload is not pending (status=%s)", ErrFinalizeUpload, upload.Status)
 	}
 	storagePath := fmt.Sprintf(originalObjectKeyPrefix, videoID)
 	upload.StoragePath = storagePath
-	upload.Status = domain.UploadStatusProcessing
+	upload.Status = entities.UploadStatusProcessing
 	upload.UpdatedAt = time.Now()
 	if err := s.uploadRepo.Update(ctx, upload); err != nil {
 		return fmt.Errorf("update upload: %w", err)
@@ -109,4 +112,46 @@ func (s *UploadService) FinalizeUpload(ctx context.Context, videoID string) erro
 		return fmt.Errorf("publish to upload-process queue: %w", err)
 	}
 	return nil
+}
+
+func (s *UploadService) UpdateUploadStatus(ctx context.Context, uploadID, status string) error {
+	if uploadID == "" || status == "" {
+		return nil
+	}
+	return s.uploadRepo.UpdateStatus(ctx, uploadID, status)
+}
+
+func (s *UploadService) UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) error {
+	if uploadID == "" || step == "" || status == "" {
+		return nil
+	}
+	return s.uploadStepRepo.UpdateStepStatus(ctx, uploadID, step, status, errorMessage)
+}
+
+func (s *UploadService) UpdateVideoMetadata(ctx context.Context, videoID, format string, durationSec float64, status string) error {
+	if videoID == "" {
+		return nil
+	}
+	v, err := s.videoRepo.GetByID(ctx, videoID)
+	if err != nil {
+		return err
+	}
+	if format != "" {
+		v.Format = format
+	}
+	if durationSec > 0 {
+		v.DurationSec = &durationSec
+	}
+	if status != "" {
+		v.Status = status
+	}
+	v.UpdatedAt = time.Now()
+	return s.videoRepo.Update(ctx, v)
+}
+
+func (s *UploadService) CreateUploadSteps(ctx context.Context, uploadID string, steps []string) error {
+	if uploadID == "" || len(steps) == 0 {
+		return nil
+	}
+	return s.uploadStepRepo.CreateSteps(ctx, uploadID, steps)
 }

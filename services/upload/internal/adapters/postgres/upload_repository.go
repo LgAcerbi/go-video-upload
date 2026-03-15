@@ -1,11 +1,12 @@
-package repository
+package postgres
 
 import (
 	"context"
 
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain/entities"
 )
 
 type UploadRepository struct {
@@ -16,7 +17,7 @@ func NewUploadRepository(pool *pgxpool.Pool) ports.UploadRepository {
 	return &UploadRepository{pool: pool}
 }
 
-func (r *UploadRepository) Create(ctx context.Context, u *domain.Upload) error {
+func (r *UploadRepository) Create(ctx context.Context, u *entities.Upload) error {
 	query := `
 		INSERT INTO uploads (id, video_id, storage_path, status, created_at, updated_at, expires_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`
@@ -25,11 +26,11 @@ func (r *UploadRepository) Create(ctx context.Context, u *domain.Upload) error {
 	return err
 }
 
-func (r *UploadRepository) GetByVideoID(ctx context.Context, videoID string) (*domain.Upload, error) {
+func (r *UploadRepository) GetByVideoID(ctx context.Context, videoID string) (*entities.Upload, error) {
 	query := `
 		SELECT id, video_id, COALESCE(storage_path, ''), status, created_at, updated_at, deleted_at, expires_at
 		FROM uploads WHERE video_id = $1 AND deleted_at IS NULL`
-	var u domain.Upload
+	var u entities.Upload
 	err := r.pool.QueryRow(ctx, query, videoID).Scan(
 		&u.ID, &u.VideoID, &u.StoragePath, &u.Status, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.ExpiresAt)
 	if err != nil {
@@ -38,11 +39,11 @@ func (r *UploadRepository) GetByVideoID(ctx context.Context, videoID string) (*d
 	return &u, nil
 }
 
-func (r *UploadRepository) GetByID(ctx context.Context, uploadID string) (*domain.Upload, error) {
+func (r *UploadRepository) GetByID(ctx context.Context, uploadID string) (*entities.Upload, error) {
 	query := `
 		SELECT id, video_id, COALESCE(storage_path, ''), status, created_at, updated_at, deleted_at, expires_at
 		FROM uploads WHERE id = $1 AND deleted_at IS NULL`
-	var u domain.Upload
+	var u entities.Upload
 	err := r.pool.QueryRow(ctx, query, uploadID).Scan(
 		&u.ID, &u.VideoID, &u.StoragePath, &u.Status, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.ExpiresAt)
 	if err != nil {
@@ -51,7 +52,7 @@ func (r *UploadRepository) GetByID(ctx context.Context, uploadID string) (*domai
 	return &u, nil
 }
 
-func (r *UploadRepository) Update(ctx context.Context, u *domain.Upload) error {
+func (r *UploadRepository) Update(ctx context.Context, u *entities.Upload) error {
 	query := `
 		UPDATE uploads SET storage_path = $2, status = $3, updated_at = $4
 		WHERE id = $1`
