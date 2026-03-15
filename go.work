@@ -4,5 +4,6 @@ use (
 	./pkg
 	./services/upload
 	./services/metadata
-	./services/transcoding
+	./services/transcode
+	./services/orchestrator
 )
