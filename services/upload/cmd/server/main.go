@@ -19,6 +19,7 @@ import (
 	_ "github.com/LgAcerbi/go-video-upload/services/upload/docs"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/grpc"
 	controller "github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http/middleware"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http/routes"
 	objectstorage "github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/object-storage"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/rabbitmq"
@@ -116,6 +117,9 @@ func main() {
 	}()
 
 	r := chi.NewRouter()
+	if envOrDefault("ENVIRONMENT", "development") != "production" {
+		r.Use(middleware.CORS([]string{"http://127.0.0.1", "http://localhost"}))
+	}
 	routes.RegisterUploadRoutes(r, uploadController)
 	r.Get("/docs/*", httpSwagger.WrapHandler)
 
