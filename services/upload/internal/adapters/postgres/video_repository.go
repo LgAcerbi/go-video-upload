@@ -5,6 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/LgAcerbi/go-video-upload/pkg/util"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain/entities"
 )
@@ -22,7 +23,7 @@ func (r *VideoRepository) Create(ctx context.Context, v *entities.Video) error {
 		INSERT INTO videos (id, user_id, title, format, status, duration_sec, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	_, err := r.pool.Exec(ctx, query,
-		v.ID, v.UserID, v.Title, nullIfEmpty(v.Format), v.Status, v.DurationSec, v.CreatedAt, v.UpdatedAt)
+		v.ID, v.UserID, v.Title, util.NullIfEmpty(v.Format), v.Status, v.DurationSec, v.CreatedAt, v.UpdatedAt)
 	return err
 }
 
@@ -40,6 +41,6 @@ func (r *VideoRepository) GetByID(ctx context.Context, id string) (*entities.Vid
 
 func (r *VideoRepository) Update(ctx context.Context, v *entities.Video) error {
 	query := `UPDATE videos SET format = $2, status = $3, duration_sec = $4, updated_at = $5 WHERE id = $1`
-	_, err := r.pool.Exec(ctx, query, v.ID, nullIfEmpty(v.Format), v.Status, v.DurationSec, v.UpdatedAt)
+	_, err := r.pool.Exec(ctx, query, v.ID, util.NullIfEmpty(v.Format), v.Status, v.DurationSec, v.UpdatedAt)
 	return err
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/LgAcerbi/go-video-upload/pkg/util"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain/entities"
 )
@@ -22,7 +23,7 @@ func (r *UploadRepository) Create(ctx context.Context, u *entities.Upload) error
 		INSERT INTO uploads (id, video_id, storage_path, status, created_at, updated_at, expires_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`
 	_, err := r.pool.Exec(ctx, query,
-		u.ID, u.VideoID, nullIfEmpty(u.StoragePath), u.Status, u.CreatedAt, u.UpdatedAt, u.ExpiresAt)
+		u.ID, u.VideoID, util.NullIfEmpty(u.StoragePath), u.Status, u.CreatedAt, u.UpdatedAt, u.ExpiresAt)
 	return err
 }
 
@@ -56,7 +57,7 @@ func (r *UploadRepository) Update(ctx context.Context, u *entities.Upload) error
 	query := `
 		UPDATE uploads SET storage_path = $2, status = $3, updated_at = $4
 		WHERE id = $1`
-	_, err := r.pool.Exec(ctx, query, u.ID, nullIfEmpty(u.StoragePath), u.Status, u.UpdatedAt)
+	_, err := r.pool.Exec(ctx, query, u.ID, util.NullIfEmpty(u.StoragePath), u.Status, u.UpdatedAt)
 	return err
 }
 
