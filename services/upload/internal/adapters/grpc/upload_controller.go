@@ -4,18 +4,16 @@ import (
 	"context"
 
 	"github.com/LgAcerbi/go-video-upload/proto/upload"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
+	service "github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
 )
 
 var _ upload.UploadStateServiceServer = (*UploadStateController)(nil)
 
-// UploadStateController is the gRPC controller for UploadStateService. It delegates all use-cases to the service.
 type UploadStateController struct {
 	upload.UnimplementedUploadStateServiceServer
 	svc *service.UploadService
 }
 
-// NewUploadStateController returns a gRPC controller that delegates to the upload service.
 func NewUploadStateController(svc *service.UploadService) *UploadStateController {
 	return &UploadStateController{svc: svc}
 }
