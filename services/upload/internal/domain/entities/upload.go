@@ -3,6 +3,7 @@ package entities
 import (
 	"time"
 
+	"github.com/LgAcerbi/go-video-upload/pkg/models"
 	"github.com/google/uuid"
 )
 
@@ -18,11 +19,11 @@ type Upload struct {
 }
 
 const (
-	UploadStatusPending    = "pending"
-	UploadStatusProcessing = "processing"
-	UploadStatusFinished   = "finished"
-	UploadStatusFailed     = "failed"
-	UploadStatusExpired    = "expired"
+	UploadStatusPending    = models.UploadStatusPending
+	UploadStatusProcessing = models.UploadStatusProcessing
+	UploadStatusFinished   = models.UploadStatusFinished
+	UploadStatusFailed     = models.UploadStatusFailed
+	UploadStatusExpired    = models.UploadStatusExpired
 )
 
 func NewUpload(videoID string, expiresAt *time.Time) *Upload {
@@ -30,7 +31,7 @@ func NewUpload(videoID string, expiresAt *time.Time) *Upload {
 	return &Upload{
 		ID:        uuid.New().String(),
 		VideoID:   videoID,
-		Status:    UploadStatusPending,
+		Status:    models.UploadStatusPending,
 		CreatedAt: now,
 		UpdatedAt: now,
 		ExpiresAt: expiresAt,
