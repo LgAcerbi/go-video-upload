@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Upload</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 28rem;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h1 { font-size: 1.25rem; margin-bottom: 1.5rem; }
+    label { display: block; font-weight: 500; margin-bottom: 0.25rem; }
+    input[type="text"], input[type="url"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    input[type="file"] {
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.5rem 0;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .message {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+    .message.error { background: #fef2f2; color: #b91c1c; }
+    .message.success { background: #f0fdf4; color: #15803d; }
+  </style>
+</head>
+<body>
+  <h1>Video upload (presigned URL)</h1>
+  <form id="uploadForm">
+    <label for="apiUrl">API URL</label>
+    <input type="url" id="apiUrl" placeholder="http://localhost:8080" value="http://localhost:8080" />
+    <label for="userId">User ID</label>
+    <input type="text" id="userId" required placeholder="e.g. user-123" />
+    <label for="title">Title</label>
+    <input type="text" id="title" required placeholder="Video title" />
+    <label for="file">Video file</label>
+    <input type="file" id="file" accept="video/mp4,.mp4" required />
+    <button type="submit" id="submitBtn">Upload</button>
+  </form>
+  <div id="message" class="message" role="alert" aria-live="polite" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
