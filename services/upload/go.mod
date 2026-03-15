@@ -4,6 +4,7 @@ go 1.24
 
 require (
 	github.com/LgAcerbi/go-video-upload/pkg v0.0.0
+	github.com/LgAcerbi/go-video-upload/proto/upload v0.0.0
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.28.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.47
@@ -13,6 +14,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.3
+	google.golang.org/grpc v1.68.0
 )
 
 require (
@@ -40,14 +42,21 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
+	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
 	golang.org/x/crypto v0.31.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
+	google.golang.org/protobuf v1.34.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/LgAcerbi/go-video-upload/pkg => ../../pkg
+replace (
+	github.com/LgAcerbi/go-video-upload/pkg => ../../pkg
+	github.com/LgAcerbi/go-video-upload/proto/upload => ../../proto/upload
+)

@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package upload;
+
+option go_package = "github.com/LgAcerbi/go-video-upload/proto/upload";
+
+// UploadStateService is used by workers and the orchestrator to update video/upload state.
+// Only the upload service writes to videos, uploads, and upload_steps; workers call this over gRPC.
+service UploadStateService {
+  rpc UpdateUploadStatus(UpdateUploadStatusRequest) returns (UpdateUploadStatusResponse);
+  rpc UpdateUploadStep(UpdateUploadStepRequest) returns (UpdateUploadStepResponse);
+  rpc UpdateVideoMetadata(UpdateVideoMetadataRequest) returns (UpdateVideoMetadataResponse);
+  rpc CreateUploadSteps(CreateUploadStepsRequest) returns (CreateUploadStepsResponse);
+}
+
+message UpdateUploadStatusRequest {
+  string upload_id = 1;
+  string status = 2;  // e.g. "processing", "finished", "failed"
+}
+
+message UpdateUploadStatusResponse {}
+
+message UpdateUploadStepRequest {
+  string upload_id = 1;
+  string step = 2;         // e.g. "metadata", "transcode", "thumbnail", "moderation"
+  string status = 3;      // e.g. "running", "done", "failed"
+  string error_message = 4;  // optional, for failures
+}
+
+message UpdateUploadStepResponse {}
+
+message UpdateVideoMetadataRequest {
+  string video_id = 1;
+  string format = 2;       // container/codec from metadata extraction (empty = no change)
+  double duration_sec = 3; // 0 = no change
+  string status = 4;       // e.g. "ready" when pipeline completes (empty = no change)
+}
+
+message UpdateVideoMetadataResponse {}
+
+message CreateUploadStepsRequest {
+  string upload_id = 1;
+  repeated string steps = 2;  // e.g. ["metadata", "transcode", "thumbnail", "moderation"]
+}
+
+message CreateUploadStepsResponse {}

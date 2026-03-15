@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -9,11 +10,15 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
 	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
+	"github.com/LgAcerbi/go-video-upload/proto/upload"
 	_ "github.com/LgAcerbi/go-video-upload/services/upload/docs"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/controllers"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/grpcserver"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/repositories"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/routes"
@@ -78,6 +83,7 @@ func main() {
 
 	videoRepo := repository.NewVideoRepository(pool)
 	uploadRepo := repository.NewUploadRepository(pool)
+	uploadStepRepo := repository.NewUploadStepRepository(pool)
 
 	rabbitCfg := rabbitmq.ConfigFromEnv()
 	rabbitConn, err := rabbitmq.Connect(rabbitCfg)
@@ -90,6 +96,22 @@ func main() {
 
 	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo, uploadProcessPub)
 	uploadController := controller.NewUploadController(uploadSvc, log)
+
+	grpcServer := grpc.NewServer()
+	upload.RegisterUploadStateServiceServer(grpcServer, grpcserver.NewUploadStateServer(uploadRepo, uploadStepRepo, videoRepo))
+	reflection.Register(grpcServer)
+
+	grpcPort := envOrDefault("GRPC_PORT", "9090")
+	grpcLis, err := net.Listen("tcp", ":"+grpcPort)
+	if err != nil {
+		log.Fatal("grpc listen failed", "error", err)
+	}
+	go func() {
+		log.Info("grpc server listening", "addr", grpcLis.Addr())
+		if err := grpcServer.Serve(grpcLis); err != nil {
+			log.Fatal("grpc server failed", "error", err)
+		}
+	}()
 
 	r := chi.NewRouter()
 	routes.RegisterUploadRoutes(r, uploadController)
