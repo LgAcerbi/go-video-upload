@@ -7,7 +7,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/LgAcerbi/go-video-upload/proto/upload"
-	"github.com/LgAcerbi/go-video-upload/services/orchestrator/internal/application/ports"
 )
 
 type UploadStateClient struct {
@@ -15,7 +14,7 @@ type UploadStateClient struct {
 	conn   *grpc.ClientConn
 }
 
-func NewUploadStateClient(ctx context.Context, target string) (ports.UploadStateClient, error) {
+func NewUploadStateClient(ctx context.Context, target string) (*UploadStateClient, error) {
 	conn, err := grpc.DialContext(ctx, target, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
@@ -28,6 +27,24 @@ func (c *UploadStateClient) CreateUploadSteps(ctx context.Context, uploadID stri
 	_, err := c.client.CreateUploadSteps(ctx, &upload.CreateUploadStepsRequest{
 		UploadId: uploadID,
 		Steps:    steps,
+	})
+	return err
+}
+
+func (c *UploadStateClient) UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) error {
+	_, err := c.client.UpdateUploadStep(ctx, &upload.UpdateUploadStepRequest{
+		UploadId:     uploadID,
+		Step:         step,
+		Status:       status,
+		ErrorMessage: errorMessage,
+	})
+	return err
+}
+
+func (c *UploadStateClient) UpdateUploadStatus(ctx context.Context, uploadID, status string) error {
+	_, err := c.client.UpdateUploadStatus(ctx, &upload.UpdateUploadStatusRequest{
+		UploadId: uploadID,
+		Status:   status,
 	})
 	return err
 }
