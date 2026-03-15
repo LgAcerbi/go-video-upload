@@ -55,6 +55,7 @@ func main() {
 	case "MINIO":
 		minioCfg := objectstorage.MinIOConfig{
 			Endpoint:        os.Getenv("S3_ENDPOINT"),
+			PresignEndpoint: os.Getenv("S3_PRESIGN_ENDPOINT"),
 			Region:          envOrDefault("S3_REGION", "us-east-1"),
 			Bucket:          bucket,
 			AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),

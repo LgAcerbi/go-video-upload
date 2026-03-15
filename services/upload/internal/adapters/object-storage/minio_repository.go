@@ -3,6 +3,7 @@ package objectstorage
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -14,16 +15,19 @@ import (
 )
 
 type MinIOConfig struct {
-	Endpoint        string
-	Region          string
-	Bucket          string
-	AccessKeyID     string
-	SecretAccessKey string
+	Endpoint         string
+	PresignEndpoint  string
+	Region           string
+	Bucket           string
+	AccessKeyID      string
+	SecretAccessKey  string
 }
 
 type MinIORepository struct {
-	client *s3.Client
-	bucket string
+	client          *s3.Client
+	bucket          string
+	endpoint        string
+	presignEndpoint string
 }
 
 func NewMinIORepository(ctx context.Context, cfg MinIOConfig) (*MinIORepository, error) {
@@ -46,7 +50,12 @@ func NewMinIORepository(ctx context.Context, cfg MinIOConfig) (*MinIORepository,
 		o.BaseEndpoint = aws.String(cfg.Endpoint)
 		o.UsePathStyle = true
 	})
-	return &MinIORepository{client: client, bucket: cfg.Bucket}, nil
+	return &MinIORepository{
+		client:          client,
+		bucket:          cfg.Bucket,
+		endpoint:        strings.TrimRight(cfg.Endpoint, "/"),
+		presignEndpoint: strings.TrimRight(cfg.PresignEndpoint, "/"),
+	}, nil
 }
 
 func (s *MinIORepository) Upload(ctx context.Context, input *ports.UploadInput) error {
@@ -90,5 +99,9 @@ func (s *MinIORepository) PresignPut(ctx context.Context, bucket, key string, ex
 	if err != nil {
 		return "", err
 	}
-	return req.URL, nil
+	url := req.URL
+	if s.presignEndpoint != "" && s.endpoint != "" {
+		url = strings.Replace(url, s.endpoint, s.presignEndpoint, 1)
+	}
+	return url, nil
 }

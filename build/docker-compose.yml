@@ -84,6 +84,7 @@ services:
       GRPC_PORT: "9090"
       OBJECT_STORAGE: MINIO
       S3_ENDPOINT: http://minio:9000
+      S3_PRESIGN_ENDPOINT: http://localhost:9000
       S3_REGION: us-east-1
       S3_BUCKET: videos
       AWS_ACCESS_KEY_ID: minioadmin
