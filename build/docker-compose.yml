@@ -131,6 +131,17 @@ services:
     ports:
       - "50052:50052"
 
+  e2e-client:
+    build:
+      context: ../e2e-client
+      dockerfile: Dockerfile
+      args:
+        VITE_UPLOAD_API_URL: http://localhost:8080
+    ports:
+      - "3000:80"
+    depends_on:
+      - upload
+
 volumes:
   minio-data:
   postgres-data:
