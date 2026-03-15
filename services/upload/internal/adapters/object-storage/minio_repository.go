@@ -15,19 +15,18 @@ import (
 )
 
 type MinIOConfig struct {
-	Endpoint         string
-	PresignEndpoint  string
-	Region           string
-	Bucket           string
-	AccessKeyID      string
-	SecretAccessKey  string
+	Endpoint        string
+	PresignEndpoint string
+	Region          string
+	Bucket          string
+	AccessKeyID     string
+	SecretAccessKey string
 }
 
 type MinIORepository struct {
-	client          *s3.Client
-	bucket          string
-	endpoint        string
-	presignEndpoint string
+	client         *s3.Client
+	presignClient  *s3.Client
+	bucket         string
 }
 
 func NewMinIORepository(ctx context.Context, cfg MinIOConfig) (*MinIORepository, error) {
@@ -50,12 +49,15 @@ func NewMinIORepository(ctx context.Context, cfg MinIOConfig) (*MinIORepository,
 		o.BaseEndpoint = aws.String(cfg.Endpoint)
 		o.UsePathStyle = true
 	})
-	return &MinIORepository{
-		client:          client,
-		bucket:          cfg.Bucket,
-		endpoint:        strings.TrimRight(cfg.Endpoint, "/"),
-		presignEndpoint: strings.TrimRight(cfg.PresignEndpoint, "/"),
-	}, nil
+	repo := &MinIORepository{client: client, bucket: cfg.Bucket}
+	presignEndpoint := strings.TrimRight(cfg.PresignEndpoint, "/")
+	if presignEndpoint != "" {
+		repo.presignClient = s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+			o.BaseEndpoint = aws.String(presignEndpoint)
+			o.UsePathStyle = true
+		})
+	}
+	return repo, nil
 }
 
 func (s *MinIORepository) Upload(ctx context.Context, input *ports.UploadInput) error {
@@ -89,8 +91,12 @@ func (s *MinIORepository) PresignPut(ctx context.Context, bucket, key string, ex
 	if bucket == "" || key == "" {
 		return "", fmt.Errorf("bucket and key are required")
 	}
-	presignClient := s3.NewPresignClient(s.client)
-	req, err := presignClient.PresignPutObject(ctx, &s3.PutObjectInput{
+	client := s.client
+	if s.presignClient != nil {
+		client = s.presignClient
+	}
+	presigner := s3.NewPresignClient(client)
+	req, err := presigner.PresignPutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	}, func(opts *s3.PresignOptions) {
@@ -99,9 +105,5 @@ func (s *MinIORepository) PresignPut(ctx context.Context, bucket, key string, ex
 	if err != nil {
 		return "", err
 	}
-	url := req.URL
-	if s.presignEndpoint != "" && s.endpoint != "" {
-		url = strings.Replace(url, s.endpoint, s.presignEndpoint, 1)
-	}
-	return url, nil
+	return req.URL, nil
 }
