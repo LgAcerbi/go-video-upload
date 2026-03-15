@@ -15,7 +15,7 @@ func CORS(allowedOrigins []string) func(http.Handler) http.Handler {
 			origin := r.Header.Get("Origin")
 			if origin != "" {
 				originNorm := strings.TrimRight(origin, "/")
-				if allowed[originNorm] || strings.HasPrefix(originNorm, "http://127.0.0.1") {
+				if allowed[originNorm] || strings.HasPrefix(originNorm, "http://127.0.0.1") || strings.HasPrefix(originNorm, "http://localhost") {
 					w.Header().Set("Access-Control-Allow-Origin", origin)
 				}
 			}
