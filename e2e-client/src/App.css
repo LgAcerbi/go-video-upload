@@ -67,3 +67,24 @@
   background: #f0fdf4;
   color: #15803d;
 }
+
+.progressWrap {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.progressBar {
+  flex: 1;
+  height: 0.5rem;
+  border-radius: 4px;
+  overflow: hidden;
+  accent-color: #2563eb;
+}
+
+.progressLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-width: 2.5rem;
+}

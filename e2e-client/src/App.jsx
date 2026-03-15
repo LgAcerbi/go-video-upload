@@ -8,6 +8,7 @@ export default function App() {
   const [title, setTitle] = useState('')
   const [file, setFile] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [message, setMessage] = useState({ text: '', error: false })
 
   const baseUrl = (apiUrl || DEFAULT_API_URL).trim().replace(/\/$/, '')
@@ -22,6 +23,7 @@ export default function App() {
     }
 
     setLoading(true)
+    setUploadProgress(0)
     try {
       const presignRes = await fetch(`${baseUrl}/videos/upload/presign`, {
         method: 'POST',
@@ -37,13 +39,22 @@ export default function App() {
       const { upload_url: uploadUrl, video_id: videoId } = await presignRes.json()
       if (!uploadUrl || !videoId) throw new Error('Invalid presign response')
 
-      const putRes = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type || 'video/mp4' },
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            setUploadProgress(Math.round((e.loaded / e.total) * 100))
+          }
+        })
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve()
+          else reject(new Error('Upload to storage failed: ' + xhr.status))
+        })
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')))
+        xhr.open('PUT', uploadUrl)
+        xhr.setRequestHeader('Content-Type', file.type || 'video/mp4')
+        xhr.send(file)
       })
-
-      if (!putRes.ok) throw new Error('Upload to storage failed: ' + putRes.status)
 
       const finalizeRes = await fetch(`${baseUrl}/videos/${encodeURIComponent(videoId)}/upload/finalize`, {
         method: 'POST',
@@ -62,6 +73,7 @@ export default function App() {
       setMessage({ text: err.message || 'Upload failed', error: true })
     } finally {
       setLoading(false)
+      setUploadProgress(0)
     }
   }
 
@@ -114,6 +126,12 @@ export default function App() {
         <button type="submit" className="submit" disabled={loading}>
           {loading ? 'Uploading…' : 'Upload'}
         </button>
+        {loading && (
+          <div className="progressWrap">
+            <progress className="progressBar" value={uploadProgress} max={100} aria-label="Upload progress" />
+            <span className="progressLabel">{uploadProgress}%</span>
+          </div>
+        )}
       </form>
       {message.text && (
         <div className={`message ${message.error ? 'error' : 'success'}`} role="alert">
