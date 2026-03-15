@@ -78,8 +78,10 @@ services:
       dockerfile: services/upload/Dockerfile
     ports:
       - "8080:8080"
+      - "9090:9090"
     environment:
       PORT: "8080"
+      GRPC_PORT: "9090"
       OBJECT_STORAGE: MINIO
       S3_ENDPOINT: http://minio:9000
       S3_REGION: us-east-1
