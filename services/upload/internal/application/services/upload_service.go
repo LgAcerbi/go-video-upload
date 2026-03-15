@@ -6,16 +6,33 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain/entities"
 )
 
 var ErrInvalidPresignRequest = errors.New("invalid presign request")
+
+var ErrInvalidExtension = errors.New("invalid file extension: only mp4 is allowed")
+
+var allowedExtensions = []string{".mp4"}
+
+func validateUploadExtension(filename string) error {
+	if filename == "" {
+		return errors.New("filename is required")
+	}
+	ext := strings.ToLower(filepath.Ext(filename))
+	for _, allowed := range allowedExtensions {
+		if ext == allowed {
+			return nil
+		}
+	}
+	return ErrInvalidExtension
+}
 
 const PresignExpiry = time.Hour
 
@@ -42,11 +59,11 @@ func NewUploadService(storage ports.FileStorageRepository, bucket string, videoR
 }
 
 func (s *UploadService) ValidateFile(filename string) error {
-	return domain.ValidateUploadExtension(filename)
+	return validateUploadExtension(filename)
 }
 
 func (s *UploadService) UploadFile(ctx context.Context, filename string, body io.Reader, contentLength int64, contentType string) (string, error) {
-	if err := domain.ValidateUploadExtension(filename); err != nil {
+	if err := validateUploadExtension(filename); err != nil {
 		return "", err
 	}
 	ext := filepath.Ext(filename)

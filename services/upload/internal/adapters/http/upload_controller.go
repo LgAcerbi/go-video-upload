@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
 )
 
@@ -71,7 +70,7 @@ func (c *UploadController) HandleUpload(w http.ResponseWriter, r *http.Request) 
 
 	key, err := c.svc.UploadFile(r.Context(), header.Filename, file, header.Size, contentType)
 	if err != nil {
-		if errors.Is(err, domain.ErrInvalidExtension) {
+		if errors.Is(err, service.ErrInvalidExtension) {
 			c.logger.Info("upload rejected: invalid extension", "filename", header.Filename)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
