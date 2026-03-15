@@ -33,12 +33,7 @@ func (r *UploadStepRepository) CreateSteps(ctx context.Context, uploadID string,
 func (r *UploadStepRepository) UpdateStepStatus(ctx context.Context, uploadID, step, status, errorMessage string) error {
 	query := `
 		UPDATE upload_steps SET status = $3, error_message = NULLIF($4, ''), updated_at = NOW()
-		WHERE upload_id = $1 AND step = $2`
-	if status == "canceled" {
-		query = `
-			UPDATE upload_steps SET status = $3, error_message = NULLIF($4, ''), updated_at = NOW()
-			WHERE upload_id = $1 AND step = $2 AND status IN ('pending', 'running')`
-	}
+		WHERE upload_id = $1 AND step = $2 AND status IN ('pending', 'processing')`
 	_, err := r.pool.Exec(ctx, query, uploadID, step, status, errorMessage)
 	return err
 }
