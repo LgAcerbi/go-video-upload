@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/controllers"
+	controller "github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http"
 )
 
 func RegisterUploadRoutes(r chi.Router, c *controller.UploadController) {
