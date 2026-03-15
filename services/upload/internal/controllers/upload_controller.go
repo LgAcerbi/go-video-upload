@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/services"
@@ -44,7 +45,7 @@ func NewUploadController(svc *service.UploadService, log logger.Logger) *UploadC
 // @Success      201  {object}  controller.UploadResponse  "Created, returns object key"
 // @Failure      400  {string}  string  "Bad request (e.g. invalid extension)"
 // @Failure      500  {string}  string  "Internal server error"
-// @Router       /upload [post]
+// @Router       /videos/upload [post]
 func (c *UploadController) HandleUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -97,7 +98,7 @@ func (c *UploadController) HandleUpload(w http.ResponseWriter, r *http.Request) 
 // @Success      200   {object}  controller.PresignResponse
 // @Failure      400   {string}  string  "Bad request (e.g. missing user_id)"
 // @Failure      500   {string}  string  "Internal server error"
-// @Router       /upload/presign [post]
+// @Router       /videos/upload/presign [post]
 func (c *UploadController) HandlePresign(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -121,4 +122,37 @@ func (c *UploadController) HandlePresign(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(PresignResponse{UploadURL: uploadURL, VideoID: videoID})
+}
+
+// HandleFinalize confirms the client finished uploading to the presigned URL and enqueues the upload for processing.
+//
+// @Summary      Finalize upload
+// @Description  Call after the client has uploaded the file to the presigned URL. Updates upload (storage_path, status) and sends event to upload-process queue.
+// @Tags         upload
+// @Produce      json
+// @Param        video_id  path  string  true  "Video ID"
+// @Success      200  "OK"
+// @Failure      400  {string}  string  "Bad request (e.g. upload not found or not pending)"
+// @Failure      500  {string}  string  "Internal server error"
+// @Router       /videos/{video_id}/upload/finalize [post]
+func (c *UploadController) HandleFinalize(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	videoID := chi.URLParam(r, "video_id")
+	if videoID == "" {
+		http.Error(w, "video_id is required", http.StatusBadRequest)
+		return
+	}
+	if err := c.svc.FinalizeUpload(r.Context(), videoID); err != nil {
+		c.logger.Error("finalize failed", "video_id", videoID, "error", err)
+		if errors.Is(err, service.ErrFinalizeUpload) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		http.Error(w, "failed to finalize upload", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

@@ -11,6 +11,7 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
+	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
 	_ "github.com/LgAcerbi/go-video-upload/services/upload/docs"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/controllers"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/ports"
@@ -78,7 +79,16 @@ func main() {
 	videoRepo := repository.NewVideoRepository(pool)
 	uploadRepo := repository.NewUploadRepository(pool)
 
-	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo)
+	rabbitCfg := rabbitmq.ConfigFromEnv()
+	rabbitConn, err := rabbitmq.Connect(rabbitCfg)
+	if err != nil {
+		log.Fatal("rabbitmq connection failed", "error", err)
+	}
+	defer rabbitConn.Close()
+
+	uploadProcessPub := repository.NewRabbitMQUploadProcessPublisher(rabbitConn)
+
+	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo, uploadProcessPub)
 	uploadController := controller.NewUploadController(uploadSvc, log)
 
 	r := chi.NewRouter()

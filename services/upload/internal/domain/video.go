@@ -34,10 +34,11 @@ const (
 	VideoStatusReady      = "ready"
 	VideoStatusFailed     = "failed"
 
-	UploadStatusPending   = "pending"
-	UploadStatusFinished  = "finished"
-	UploadStatusFailed    = "failed"
-	UploadStatusExpired   = "expired"
+	UploadStatusPending    = "pending"
+	UploadStatusProcessing = "processing"
+	UploadStatusFinished   = "finished"
+	UploadStatusFailed     = "failed"
+	UploadStatusExpired    = "expired"
 )
 
 func NewVideo(userID, title string) *Video {

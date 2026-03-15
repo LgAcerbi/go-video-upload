@@ -6,6 +6,7 @@ import (
 )
 
 func RegisterUploadRoutes(r chi.Router, c *controller.UploadController) {
-	r.Post("/upload", c.HandleUpload)
-	r.Post("/upload/presign", c.HandlePresign)
+	r.Post("/videos/upload", c.HandleUpload)
+	r.Post("/videos/upload/presign", c.HandlePresign)
+	r.Post("/videos/{video_id}/upload/finalize", c.HandleFinalize)
 }

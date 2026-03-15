@@ -21,18 +21,20 @@ const PresignExpiry = time.Hour
 const originalObjectKeyPrefix = "videos/%s/original"
 
 type UploadService struct {
-	storage      ports.FileStorageRepository
-	bucket       string
-	videoRepo    ports.VideoRepository
-	uploadRepo   ports.UploadRepository
+	storage           ports.FileStorageRepository
+	bucket            string
+	videoRepo         ports.VideoRepository
+	uploadRepo        ports.UploadRepository
+	uploadProcessPub  ports.UploadProcessPublisher
 }
 
-func NewUploadService(storage ports.FileStorageRepository, bucket string, videoRepo ports.VideoRepository, uploadRepo ports.UploadRepository) *UploadService {
+func NewUploadService(storage ports.FileStorageRepository, bucket string, videoRepo ports.VideoRepository, uploadRepo ports.UploadRepository, uploadProcessPub ports.UploadProcessPublisher) *UploadService {
 	return &UploadService{
-		storage:    storage,
-		bucket:     bucket,
-		videoRepo:  videoRepo,
-		uploadRepo: uploadRepo,
+		storage:          storage,
+		bucket:           bucket,
+		videoRepo:        videoRepo,
+		uploadRepo:       uploadRepo,
+		uploadProcessPub: uploadProcessPub,
 	}
 }
 
@@ -81,4 +83,30 @@ func (s *UploadService) RequestPresignURL(ctx context.Context, userID, title str
 		return "", "", fmt.Errorf("presign put: %w", err)
 	}
 	return url, video.ID, nil
+}
+
+var ErrFinalizeUpload = errors.New("cannot finalize upload")
+
+func (s *UploadService) FinalizeUpload(ctx context.Context, videoID string) error {
+	if videoID == "" {
+		return fmt.Errorf("%w: video_id is required", ErrFinalizeUpload)
+	}
+	upload, err := s.uploadRepo.GetByVideoID(ctx, videoID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrFinalizeUpload, err)
+	}
+	if upload.Status != domain.UploadStatusPending {
+		return fmt.Errorf("%w: upload is not pending (status=%s)", ErrFinalizeUpload, upload.Status)
+	}
+	storagePath := fmt.Sprintf(originalObjectKeyPrefix, videoID)
+	upload.StoragePath = storagePath
+	upload.Status = domain.UploadStatusProcessing
+	upload.UpdatedAt = time.Now()
+	if err := s.uploadRepo.Update(ctx, upload); err != nil {
+		return fmt.Errorf("update upload: %w", err)
+	}
+	if err := s.uploadProcessPub.PublishUploadProcess(ctx, videoID, upload.ID, storagePath); err != nil {
+		return fmt.Errorf("publish to upload-process queue: %w", err)
+	}
+	return nil
 }
