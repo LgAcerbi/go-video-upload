@@ -6,9 +6,15 @@
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-PROTO_DIR="$REPO_ROOT/proto"
+PROTO_ROOT="$REPO_ROOT/proto"
 
 cd "$REPO_ROOT"
-# Placeholder: add protoc invocations per proto package when ready
-# Example: protoc --go_out=. --go-grpc_out=. -I "$PROTO_DIR" "$PROTO_DIR/metadata/*.proto"
-echo "Proto generation placeholder. Configure protoc commands for metadata and transcoding protos."
+
+# Upload state service (used by workers to update video/upload via gRPC)
+if [ -f "$PROTO_ROOT/upload/upload.proto" ]; then
+  protoc --go_out="$PROTO_ROOT/upload" --go_opt=paths=source_relative \
+    --go-grpc_out="$PROTO_ROOT/upload" --go-grpc_opt=paths=source_relative \
+    -I "$PROTO_ROOT" \
+    "$PROTO_ROOT/upload/upload.proto"
+  echo "Generated proto/upload/*.pb.go"
+fi

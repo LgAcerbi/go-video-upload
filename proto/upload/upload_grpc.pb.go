@@ -8,7 +8,6 @@ import (
 	status "google.golang.org/grpc/status"
 )
 
-// UploadStateServiceServer is implemented by the upload service. Workers call it via gRPC to update state.
 type UploadStateServiceServer interface {
 	UpdateUploadStatus(context.Context, *UpdateUploadStatusRequest) (*UpdateUploadStatusResponse, error)
 	UpdateUploadStep(context.Context, *UpdateUploadStepRequest) (*UpdateUploadStepResponse, error)
@@ -16,7 +15,6 @@ type UploadStateServiceServer interface {
 	CreateUploadSteps(context.Context, *CreateUploadStepsRequest) (*CreateUploadStepsResponse, error)
 }
 
-// UnimplementedUploadStateServiceServer must be embedded for forward compatibility.
 type UnimplementedUploadStateServiceServer struct{}
 
 func (UnimplementedUploadStateServiceServer) UpdateUploadStatus(context.Context, *UpdateUploadStatusRequest) (*UpdateUploadStatusResponse, error) {
@@ -32,7 +30,6 @@ func (UnimplementedUploadStateServiceServer) CreateUploadSteps(context.Context, 
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUploadSteps not implemented")
 }
 
-// UnsafeUploadStateServiceServer may be embedded to opt out of forward compatibility.
 type UnsafeUploadStateServiceServer interface {
 	mustEmbedUnimplementedUploadStateServiceServer()
 }
