@@ -160,3 +160,8 @@ func (s *UploadService) RequestPresignURL(ctx context.Context, userID, title str
 4. Add or extend HTTP controller in `internal/adapters/http/` and route registration in `internal/adapters/http/routes/`, and/or gRPC controller in `internal/adapters/grpc/`.
 5. Add or extend adapter in `internal/adapters/postgres/`, `object-storage/`, `rabbitmq/` (or new folder) implementing the port.
 6. In `cmd/server/main.go`: instantiate the new adapter, inject into service, inject service into controller(s), register routes/gRPC, start server(s).
+
+## 11. Comments
+
+- Do **not** add comments in code unless they are required for **Swagger/OpenAPI** documentation (e.g. `// @Summary`, `// @Description`, `// @Router` on HTTP handlers).
+- Prefer clear names and small functions over explanatory comments. If something needs a comment to be understood, consider refactoring instead.
