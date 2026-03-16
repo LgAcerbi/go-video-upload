@@ -59,7 +59,7 @@ func RunExtractMetadataConsumer(ctx context.Context, conn *rabbitmq.Connection, 
 			}
 			if err := svc.ExtractMetadata(ctx, msg.VideoID, msg.UploadID, msg.StoragePath); err != nil {
 				log.Error("extract metadata failed", "upload_id", msg.UploadID, "error", err)
-				_ = d.Nack(false, true)
+				_ = d.Nack(false, false)
 				continue
 			}
 			_ = d.Ack(false)
