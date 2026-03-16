@@ -52,7 +52,7 @@ func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *
 			}
 			if err := svc.HandleStepResult(ctx, msg.UploadID, msg.VideoID, msg.Step, msg.Status, msg.ErrorMessage, msg.StoragePath); err != nil {
 				log.Error("handle step result failed", "upload_id", msg.UploadID, "step", msg.Step, "error", err)
-				_ = d.Nack(false, true)
+				_ = d.Nack(false, false)
 				continue
 			}
 			_ = d.Ack(false)

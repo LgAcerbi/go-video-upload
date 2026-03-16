@@ -49,7 +49,7 @@ func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, sv
 			}
 			if err := svc.ProcessUploadProcess(ctx, msg.VideoID, msg.UploadID, msg.StoragePath); err != nil {
 				log.Error("process upload failed", "upload_id", msg.UploadID, "error", err)
-				_ = d.Nack(false, true)
+				_ = d.Nack(false, false)
 				continue
 			}
 			_ = d.Ack(false)
