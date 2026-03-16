@@ -1,34 +1,34 @@
 services:
-  minio:
-    image: minio/minio:latest
+  localstack:
+    image: localstack/localstack:latest
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "4566:4566"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio-data:/data
+      SERVICES: s3
+      DEBUG: "0"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
 
-  minio-init:
-    image: minio/mc:latest
+  localstack-init:
+    image: amazon/aws-cli:latest
     depends_on:
-      - minio
+      localstack:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+    volumes:
+      - ./localstack/cors.json:/cors.json:ro
     entrypoint: >
       /bin/sh -c "
-      echo 'Waiting for MinIO to accept connections...';
-      sleep 10;
-      mc alias set myminio http://minio:9000 minioadmin minioadmin;
-      n=0; max=60;
-      until mc ready myminio 2>/dev/null; do
-        n=$$(($$n + 1));
-        if [ $$n -ge $$max ]; then echo 'MinIO did not become ready in 2 minutes'; exit 1; fi;
-        echo 'Waiting for MinIO... ($$n/$$max)'; sleep 2;
-      done;
-      mc mb myminio/videos --ignore-existing;
-      echo 'Bucket videos ready';
-      exit 0;
+      aws --endpoint-url=http://localstack:4566 s3 mb s3://videos --region us-east-1 2>/dev/null || true;
+      aws --endpoint-url=http://localstack:4566 s3api put-bucket-cors --bucket videos --cors-configuration file:///cors.json;
+      echo 'LocalStack bucket videos ready with CORS';
       "
 
   rabbitmq:
@@ -82,20 +82,20 @@ services:
     environment:
       PORT: "8080"
       GRPC_PORT: "9090"
-      OBJECT_STORAGE: MINIO
-      S3_ENDPOINT: http://minio:9000
-      S3_PRESIGN_ENDPOINT: http://localhost:9000
+      OBJECT_STORAGE: S3
+      S3_ENDPOINT: http://localstack:4566
+      S3_PRESIGN_ENDPOINT: http://localhost:4566
       S3_REGION: us-east-1
       S3_BUCKET: videos
-      AWS_ACCESS_KEY_ID: minioadmin
-      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
       RABBITMQ_USER: admin
       RABBITMQ_PASS: admin
       DATABASE_URL: postgresql://admin:admin@postgres:5432/admin
     depends_on:
-      minio-init:
+      localstack-init:
         condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
@@ -108,6 +108,22 @@ services:
       dockerfile: services/metadata/Dockerfile
     ports:
       - "50051:50051"
+    environment:
+      UPLOAD_GRPC_TARGET: upload:9090
+      S3_ENDPOINT: http://localstack:4566
+      S3_REGION: us-east-1
+      S3_BUCKET: videos
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin
+    depends_on:
+      upload:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
 
   orchestrator:
     build:
@@ -144,5 +160,4 @@ services:
       - upload
 
 volumes:
-  minio-data:
   postgres-data:
