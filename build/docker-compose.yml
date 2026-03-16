@@ -31,6 +31,26 @@ services:
       echo 'LocalStack bucket videos ready with CORS';
       "
 
+  influxdb:
+    image: influxdb:2
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin
+      DOCKER_INFLUXDB_INIT_ORG: org
+      DOCKER_INFLUXDB_INIT_BUCKET: metrics
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: dev-influxdb-token
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
   rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -94,12 +114,18 @@ services:
       RABBITMQ_USER: admin
       RABBITMQ_PASS: admin
       DATABASE_URL: postgresql://admin:admin@postgres:5432/admin
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: dev-influxdb-token
+      INFLUXDB_ORG: org
+      INFLUXDB_BUCKET: metrics
     depends_on:
       localstack-init:
         condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
       postgres:
+        condition: service_healthy
+      influxdb:
         condition: service_healthy
 
   metadata:
@@ -161,3 +187,4 @@ services:
 
 volumes:
   postgres-data:
+  influxdb-data:
