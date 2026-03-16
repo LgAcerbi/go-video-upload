@@ -3,35 +3,75 @@ package objectstorage
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
 )
 
 type S3Config struct {
-	Region string
-	Bucket string
+	Endpoint        string
+	PresignEndpoint string
+	Region          string
+	Bucket          string
+	AccessKeyID     string
+	SecretAccessKey string
 }
 
 type S3Repository struct {
-	client *s3.Client
-	bucket string
+	client         *s3.Client
+	presignClient  *s3.Client
+	bucket         string
 }
 
 func NewS3Repository(ctx context.Context, cfg S3Config) (*S3Repository, error) {
 	if cfg.Region == "" {
 		cfg.Region = "us-east-1"
 	}
-	awsCfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(cfg.Region))
-	if err != nil {
-		return nil, fmt.Errorf("loading AWS config: %w", err)
+	var awsCfg aws.Config
+	var err error
+	if cfg.Endpoint != "" && cfg.AccessKeyID != "" && cfg.SecretAccessKey != "" {
+		awsCfg, err = config.LoadDefaultConfig(ctx,
+			config.WithRegion(cfg.Region),
+			config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+				cfg.AccessKeyID, cfg.SecretAccessKey, "",
+			)),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("loading AWS config: %w", err)
+		}
+	} else {
+		awsCfg, err = config.LoadDefaultConfig(ctx, config.WithRegion(cfg.Region))
+		if err != nil {
+			return nil, fmt.Errorf("loading AWS config: %w", err)
+		}
 	}
-	client := s3.NewFromConfig(awsCfg)
-	return &S3Repository{client: client, bucket: cfg.Bucket}, nil
+	repo := &S3Repository{bucket: cfg.Bucket}
+	if cfg.Endpoint != "" {
+		endpoint := strings.TrimRight(cfg.Endpoint, "/")
+		repo.client = s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+			o.BaseEndpoint = aws.String(endpoint)
+			o.UsePathStyle = true
+		})
+		presignEndpoint := strings.TrimRight(cfg.PresignEndpoint, "/")
+		if presignEndpoint != "" {
+			repo.presignClient = s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+				o.BaseEndpoint = aws.String(presignEndpoint)
+				o.UsePathStyle = true
+			})
+		}
+	} else {
+		repo.client = s3.NewFromConfig(awsCfg)
+	}
+	if repo.client == nil {
+		repo.client = s3.NewFromConfig(awsCfg)
+	}
+	return repo, nil
 }
 
 func (s *S3Repository) Upload(ctx context.Context, input *ports.UploadInput) error {
@@ -65,8 +105,12 @@ func (s *S3Repository) PresignPut(ctx context.Context, bucket, key string, expir
 	if bucket == "" || key == "" {
 		return "", fmt.Errorf("bucket and key are required")
 	}
-	presignClient := s3.NewPresignClient(s.client)
-	req, err := presignClient.PresignPutObject(ctx, &s3.PutObjectInput{
+	client := s.client
+	if s.presignClient != nil {
+		client = s.presignClient
+	}
+	presigner := s3.NewPresignClient(client)
+	req, err := presigner.PresignPutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	}, func(opts *s3.PresignOptions) {

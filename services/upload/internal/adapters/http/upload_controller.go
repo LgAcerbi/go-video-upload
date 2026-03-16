@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
+	service "github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
+	"github.com/go-chi/chi/v5"
 )
 
 type UploadResponse struct {
@@ -118,6 +120,13 @@ func (c *UploadController) HandlePresign(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "failed to create presigned URL", http.StatusInternalServerError)
 		return
 	}
+	if v := strings.ToLower(os.Getenv("USE_UPLOAD_PROXY")); v == "true" || v == "1" {
+		scheme := "http"
+		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+			scheme = "https"
+		}
+		uploadURL = strings.TrimRight(scheme+"://"+r.Host, "/") + "/videos/upload/put/" + videoID
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(PresignResponse{UploadURL: uploadURL, VideoID: videoID})
@@ -151,6 +160,32 @@ func (c *UploadController) HandleFinalize(w http.ResponseWriter, r *http.Request
 			return
 		}
 		http.Error(w, "failed to finalize upload", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (c *UploadController) HandlePutUploadProxy(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	videoID := chi.URLParam(r, "video_id")
+	if videoID == "" {
+		http.Error(w, "video_id is required", http.StatusBadRequest)
+		return
+	}
+	contentType := r.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "video/mp4"
+	}
+	if err := c.svc.UploadToVideoKey(r.Context(), videoID, r.Body, contentType, r.ContentLength); err != nil {
+		c.logger.Error("upload proxy failed", "video_id", videoID, "error", err)
+		if errors.Is(err, service.ErrUploadProxy) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		http.Error(w, "upload failed", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
+	"github.com/LgAcerbi/go-video-upload/pkg/metrics"
 	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
 	"github.com/LgAcerbi/go-video-upload/proto/upload"
 	_ "github.com/LgAcerbi/go-video-upload/services/upload/docs"
@@ -64,8 +65,12 @@ func main() {
 		storage, err = objectstorage.NewMinIORepository(ctx, minioCfg)
 	case "S3":
 		s3Cfg := objectstorage.S3Config{
-			Region: envOrDefault("S3_REGION", "us-east-1"),
-			Bucket: bucket,
+			Endpoint:        os.Getenv("S3_ENDPOINT"),
+			PresignEndpoint: os.Getenv("S3_PRESIGN_ENDPOINT"),
+			Region:          envOrDefault("S3_REGION", "us-east-1"),
+			Bucket:          bucket,
+			AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
+			SecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
 		}
 		storage, err = objectstorage.NewS3Repository(ctx, s3Cfg)
 	default:
@@ -98,10 +103,20 @@ func main() {
 
 	uploadProcessPub := amqp.NewRabbitMQUploadProcessPublisher(rabbitConn)
 
+	metricsWriter, _ := metrics.NewWriter(metrics.WriterConfig{
+		URL:    os.Getenv("INFLUXDB_URL"),
+		Token:  os.Getenv("INFLUXDB_TOKEN"),
+		Org:    envOrDefault("INFLUXDB_ORG", "org"),
+		Bucket: envOrDefault("INFLUXDB_BUCKET", "metrics"),
+	})
+	if metricsWriter != nil {
+		defer metricsWriter.Close()
+	}
+
 	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo, uploadStepRepo, uploadProcessPub)
 	uploadController := controller.NewUploadController(uploadSvc, log)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcserver.MetricsUnaryInterceptor(metricsWriter, "upload")))
 	upload.RegisterUploadStateServiceServer(grpcServer, grpcserver.NewUploadStateController(uploadSvc))
 	reflection.Register(grpcServer)
 
@@ -121,6 +136,7 @@ func main() {
 	if envOrDefault("ENVIRONMENT", "development") != "production" {
 		r.Use(middleware.CORS([]string{"http://127.0.0.1", "http://localhost"}))
 	}
+	r.Use(middleware.Metrics(metricsWriter, "upload"))
 	routes.RegisterUploadRoutes(r, uploadController)
 	r.Get("/docs/*", httpSwagger.WrapHandler)
 
