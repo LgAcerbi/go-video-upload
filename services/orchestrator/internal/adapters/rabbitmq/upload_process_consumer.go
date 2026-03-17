@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
+	"github.com/LgAcerbi/go-video-upload/pkg/metrics"
 	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
 	"github.com/LgAcerbi/go-video-upload/services/orchestrator/internal/application/services"
 )
 
 const uploadProcessQueueName = "upload-process"
+const serviceTagUploadProcess = "upload-process"
 
 type uploadProcessMessage struct {
 	VideoID     string `json:"video_id"`
@@ -17,7 +19,7 @@ type uploadProcessMessage struct {
 	StoragePath string `json:"storage_path"`
 }
 
-func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.OrchestratorService, log logger.Logger) error {
+func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.OrchestratorService, mw *metrics.Writer, log logger.Logger) error {
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -40,6 +42,9 @@ func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, sv
 		case d, ok := <-deliveries:
 			if !ok {
 				return nil
+			}
+			if mw != nil {
+				mw.Record("message_consumed", map[string]string{"service": serviceTagUploadProcess}, map[string]interface{}{"input": string(d.Body)})
 			}
 			var msg uploadProcessMessage
 			if err := json.Unmarshal(d.Body, &msg); err != nil {

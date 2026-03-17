@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
+	"github.com/LgAcerbi/go-video-upload/pkg/metrics"
 	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
 	"github.com/LgAcerbi/go-video-upload/services/orchestrator/internal/application/services"
 )
 
 const uploadProcessStepQueueName = "upload-process-step"
+const serviceTagStepResult = "upload-process-step"
 
 type stepResultMessage struct {
 	UploadID     string `json:"upload_id"`
@@ -20,7 +22,7 @@ type stepResultMessage struct {
 	StoragePath  string `json:"storage_path"`
 }
 
-func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.OrchestratorService, log logger.Logger) error {
+func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.OrchestratorService, mw *metrics.Writer, log logger.Logger) error {
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -43,6 +45,9 @@ func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *
 		case d, ok := <-deliveries:
 			if !ok {
 				return nil
+			}
+			if mw != nil {
+				mw.Record("message_consumed", map[string]string{"service": serviceTagStepResult}, map[string]interface{}{"input": string(d.Body)})
 			}
 			var msg stepResultMessage
 			if err := json.Unmarshal(d.Body, &msg); err != nil {

@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
+	"github.com/LgAcerbi/go-video-upload/pkg/metrics"
 	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
 	"github.com/LgAcerbi/go-video-upload/services/orchestrator/internal/adapters/grpc"
 	amqp "github.com/LgAcerbi/go-video-upload/services/orchestrator/internal/adapters/rabbitmq"
@@ -38,16 +39,26 @@ func main() {
 	stepPublisher := amqp.NewStepPublisher(rabbitConn)
 	svc := service.NewOrchestratorService(uploadClient, stepPublisher)
 
+	metricsWriter, _ := metrics.NewWriter(metrics.WriterConfig{
+		URL:    os.Getenv("INFLUXDB_URL"),
+		Token:  os.Getenv("INFLUXDB_TOKEN"),
+		Org:    envOrDefault("INFLUXDB_ORG", "org"),
+		Bucket: envOrDefault("INFLUXDB_BUCKET", "metrics"),
+	})
+	if metricsWriter != nil {
+		defer metricsWriter.Close()
+	}
+
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	go func() {
-		if err := amqp.RunUploadProcessConsumer(runCtx, rabbitConn, svc, log); err != nil && runCtx.Err() == nil {
+		if err := amqp.RunUploadProcessConsumer(runCtx, rabbitConn, svc, metricsWriter, log); err != nil && runCtx.Err() == nil {
 			log.Error("upload-process consumer exited", "error", err)
 		}
 	}()
 	go func() {
-		if err := amqp.RunStepResultConsumer(runCtx, rabbitConn, svc, log); err != nil && runCtx.Err() == nil {
+		if err := amqp.RunStepResultConsumer(runCtx, rabbitConn, svc, metricsWriter, log); err != nil && runCtx.Err() == nil {
 			log.Error("upload-process-step consumer exited", "error", err)
 		}
 	}()
@@ -59,4 +70,11 @@ func main() {
 	<-quit
 	log.Info("shutting down")
 	cancel()
+}
+
+func envOrDefault(key, defaultVal string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return defaultVal
 }
