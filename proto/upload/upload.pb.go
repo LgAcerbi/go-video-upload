@@ -216,11 +216,9 @@ func (*UpdateUploadStepResponse) Descriptor() ([]byte, []int) {
 type UpdateVideoMetadataRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	VideoId       string                 `protobuf:"bytes,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
-	Format        string                 `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`                                // container/codec from metadata extraction (empty = no change)
-	DurationSec   float64                `protobuf:"fixed64,3,opt,name=duration_sec,json=durationSec,proto3" json:"duration_sec,omitempty"` // 0 = no change
-	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`                                // e.g. "ready" when pipeline completes (empty = no change)
-	Width         int32                  `protobuf:"varint,5,opt,name=width,proto3" json:"width,omitempty"`
-	Height        int32                  `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`
+	Format        string                 `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`
+	DurationSec   float64                `protobuf:"fixed64,3,opt,name=duration_sec,json=durationSec,proto3" json:"duration_sec,omitempty"`
+	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -281,20 +279,6 @@ func (x *UpdateVideoMetadataRequest) GetStatus() string {
 		return x.Status
 	}
 	return ""
-}
-
-func (x *UpdateVideoMetadataRequest) GetWidth() int32 {
-	if x != nil {
-		return x.Width
-	}
-	return 0
-}
-
-func (x *UpdateVideoMetadataRequest) GetHeight() int32 {
-	if x != nil {
-		return x.Height
-	}
-	return 0
 }
 
 type UpdateVideoMetadataResponse struct {
@@ -421,6 +405,195 @@ func (*CreateUploadStepsResponse) Descriptor() ([]byte, []int) {
 	return file_upload_proto_rawDescGZIP(), []int{7}
 }
 
+type CreateRenditionsRequest struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	VideoId               string                 `protobuf:"bytes,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	OriginalStoragePath   string                 `protobuf:"bytes,2,opt,name=original_storage_path,json=originalStoragePath,proto3" json:"original_storage_path,omitempty"`
+	OriginalWidth         int32                  `protobuf:"varint,3,opt,name=original_width,json=originalWidth,proto3" json:"original_width,omitempty"`
+	OriginalHeight        int32                  `protobuf:"varint,4,opt,name=original_height,json=originalHeight,proto3" json:"original_height,omitempty"`
+	TargetHeights         []int32                `protobuf:"varint,5,rep,packed,name=target_heights,json=targetHeights,proto3" json:"target_heights,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *CreateRenditionsRequest) Reset() { *x = CreateRenditionsRequest{} }
+func (x *CreateRenditionsRequest) String() string { return protoimpl.X.MessageStringOf(x) }
+func (*CreateRenditionsRequest) ProtoMessage() {}
+func (x *CreateRenditionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+func (*CreateRenditionsRequest) Descriptor() ([]byte, []int) { return file_upload_proto_rawDescGZIP(), []int{8} }
+
+func (x *CreateRenditionsRequest) GetVideoId() string { if x != nil { return x.VideoId }; return "" }
+func (x *CreateRenditionsRequest) GetOriginalStoragePath() string { if x != nil { return x.OriginalStoragePath }; return "" }
+func (x *CreateRenditionsRequest) GetOriginalWidth() int32 { if x != nil { return x.OriginalWidth }; return 0 }
+func (x *CreateRenditionsRequest) GetOriginalHeight() int32 { if x != nil { return x.OriginalHeight }; return 0 }
+func (x *CreateRenditionsRequest) GetTargetHeights() []int32 { if x != nil { return x.TargetHeights }; return nil }
+
+type CreateRenditionsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateRenditionsResponse) Reset() { *x = CreateRenditionsResponse{} }
+func (x *CreateRenditionsResponse) String() string { return protoimpl.X.MessageStringOf(x) }
+func (*CreateRenditionsResponse) ProtoMessage() {}
+func (x *CreateRenditionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+func (*CreateRenditionsResponse) Descriptor() ([]byte, []int) { return file_upload_proto_rawDescGZIP(), []int{9} }
+
+type ListPendingRenditionsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VideoId       string                 `protobuf:"bytes,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPendingRenditionsRequest) Reset() { *x = ListPendingRenditionsRequest{} }
+func (x *ListPendingRenditionsRequest) String() string { return protoimpl.X.MessageStringOf(x) }
+func (*ListPendingRenditionsRequest) ProtoMessage() {}
+func (x *ListPendingRenditionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+func (*ListPendingRenditionsRequest) Descriptor() ([]byte, []int) { return file_upload_proto_rawDescGZIP(), []int{10} }
+
+func (x *ListPendingRenditionsRequest) GetVideoId() string { if x != nil { return x.VideoId }; return "" }
+
+type PendingRendition struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Resolution    string                 `protobuf:"bytes,1,opt,name=resolution,proto3" json:"resolution,omitempty"`
+	Height        int32                  `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PendingRendition) Reset() { *x = PendingRendition{} }
+func (x *PendingRendition) String() string { return protoimpl.X.MessageStringOf(x) }
+func (*PendingRendition) ProtoMessage() {}
+func (x *PendingRendition) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+func (*PendingRendition) Descriptor() ([]byte, []int) { return file_upload_proto_rawDescGZIP(), []int{11} }
+
+func (x *PendingRendition) GetResolution() string { if x != nil { return x.Resolution }; return "" }
+func (x *PendingRendition) GetHeight() int32 { if x != nil { return x.Height }; return 0 }
+
+type ListPendingRenditionsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Renditions    []*PendingRendition     `protobuf:"bytes,1,rep,name=renditions,proto3" json:"renditions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPendingRenditionsResponse) Reset() { *x = ListPendingRenditionsResponse{} }
+func (x *ListPendingRenditionsResponse) String() string { return protoimpl.X.MessageStringOf(x) }
+func (*ListPendingRenditionsResponse) ProtoMessage() {}
+func (x *ListPendingRenditionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+func (*ListPendingRenditionsResponse) Descriptor() ([]byte, []int) { return file_upload_proto_rawDescGZIP(), []int{12} }
+
+func (x *ListPendingRenditionsResponse) GetRenditions() []*PendingRendition { if x != nil { return x.Renditions }; return nil }
+
+type UpdateRenditionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	VideoId       string                 `protobuf:"bytes,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	Resolution    string                 `protobuf:"bytes,2,opt,name=resolution,proto3" json:"resolution,omitempty"`
+	StoragePath   string                 `protobuf:"bytes,3,opt,name=storage_path,json=storagePath,proto3" json:"storage_path,omitempty"`
+	Width         int32                  `protobuf:"varint,4,opt,name=width,proto3" json:"width,omitempty"`
+	Height        int32                  `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
+	BitrateKbps   int32                  `protobuf:"varint,6,opt,name=bitrate_kbps,json=bitrateKbps,proto3" json:"bitrate_kbps,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateRenditionRequest) Reset() { *x = UpdateRenditionRequest{} }
+func (x *UpdateRenditionRequest) String() string { return protoimpl.X.MessageStringOf(x) }
+func (*UpdateRenditionRequest) ProtoMessage() {}
+func (x *UpdateRenditionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+func (*UpdateRenditionRequest) Descriptor() ([]byte, []int) { return file_upload_proto_rawDescGZIP(), []int{13} }
+
+func (x *UpdateRenditionRequest) GetVideoId() string { if x != nil { return x.VideoId }; return "" }
+func (x *UpdateRenditionRequest) GetResolution() string { if x != nil { return x.Resolution }; return "" }
+func (x *UpdateRenditionRequest) GetStoragePath() string { if x != nil { return x.StoragePath }; return "" }
+func (x *UpdateRenditionRequest) GetWidth() int32 { if x != nil { return x.Width }; return 0 }
+func (x *UpdateRenditionRequest) GetHeight() int32 { if x != nil { return x.Height }; return 0 }
+func (x *UpdateRenditionRequest) GetBitrateKbps() int32 { if x != nil { return x.BitrateKbps }; return 0 }
+
+type UpdateRenditionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateRenditionResponse) Reset() { *x = UpdateRenditionResponse{} }
+func (x *UpdateRenditionResponse) String() string { return protoimpl.X.MessageStringOf(x) }
+func (*UpdateRenditionResponse) ProtoMessage() {}
+func (x *UpdateRenditionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+func (*UpdateRenditionResponse) Descriptor() ([]byte, []int) { return file_upload_proto_rawDescGZIP(), []int{14} }
+
 var File_upload_proto protoreflect.FileDescriptor
 
 const file_upload_proto_rawDesc = "" +
@@ -464,31 +637,44 @@ func file_upload_proto_rawDescGZIP() []byte {
 	return file_upload_proto_rawDescData
 }
 
-var file_upload_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_upload_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_upload_proto_goTypes = []any{
-	(*UpdateUploadStatusRequest)(nil),   // 0: upload.UpdateUploadStatusRequest
+	(*UpdateUploadStatusRequest)(nil),    // 0: upload.UpdateUploadStatusRequest
 	(*UpdateUploadStatusResponse)(nil),  // 1: upload.UpdateUploadStatusResponse
 	(*UpdateUploadStepRequest)(nil),     // 2: upload.UpdateUploadStepRequest
 	(*UpdateUploadStepResponse)(nil),    // 3: upload.UpdateUploadStepResponse
 	(*UpdateVideoMetadataRequest)(nil),  // 4: upload.UpdateVideoMetadataRequest
 	(*UpdateVideoMetadataResponse)(nil), // 5: upload.UpdateVideoMetadataResponse
 	(*CreateUploadStepsRequest)(nil),    // 6: upload.CreateUploadStepsRequest
-	(*CreateUploadStepsResponse)(nil),   // 7: upload.CreateUploadStepsResponse
+	(*CreateUploadStepsResponse)(nil),    // 7: upload.CreateUploadStepsResponse
+	(*CreateRenditionsRequest)(nil),     // 8: upload.CreateRenditionsRequest
+	(*CreateRenditionsResponse)(nil),     // 9: upload.CreateRenditionsResponse
+	(*ListPendingRenditionsRequest)(nil),   // 10: upload.ListPendingRenditionsRequest
+	(*PendingRendition)(nil),               // 11: upload.PendingRendition
+	(*ListPendingRenditionsResponse)(nil),  // 12: upload.ListPendingRenditionsResponse
+	(*UpdateRenditionRequest)(nil),         // 13: upload.UpdateRenditionRequest
+	(*UpdateRenditionResponse)(nil),       // 14: upload.UpdateRenditionResponse
 }
 var file_upload_proto_depIdxs = []int32{
-	0, // 0: upload.UploadStateService.UpdateUploadStatus:input_type -> upload.UpdateUploadStatusRequest
-	2, // 1: upload.UploadStateService.UpdateUploadStep:input_type -> upload.UpdateUploadStepRequest
-	4, // 2: upload.UploadStateService.UpdateVideoMetadata:input_type -> upload.UpdateVideoMetadataRequest
-	6, // 3: upload.UploadStateService.CreateUploadSteps:input_type -> upload.CreateUploadStepsRequest
-	1, // 4: upload.UploadStateService.UpdateUploadStatus:output_type -> upload.UpdateUploadStatusResponse
-	3, // 5: upload.UploadStateService.UpdateUploadStep:output_type -> upload.UpdateUploadStepResponse
-	5, // 6: upload.UploadStateService.UpdateVideoMetadata:output_type -> upload.UpdateVideoMetadataResponse
-	7, // 7: upload.UploadStateService.CreateUploadSteps:output_type -> upload.CreateUploadStepsResponse
-	4, // [4:8] is the sub-list for method output_type
-	0, // [0:4] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: upload.UploadStateService.UpdateUploadStatus:input_type -> upload.UpdateUploadStatusRequest
+	2,  // 1: upload.UploadStateService.UpdateUploadStep:input_type -> upload.UpdateUploadStepRequest
+	4,  // 2: upload.UploadStateService.UpdateVideoMetadata:input_type -> upload.UpdateVideoMetadataRequest
+	6,  // 3: upload.UploadStateService.CreateUploadSteps:input_type -> upload.CreateUploadStepsRequest
+	8,  // 4: upload.UploadStateService.CreateRenditions:input_type -> upload.CreateRenditionsRequest
+	10, // 5: upload.UploadStateService.ListPendingRenditions:input_type -> upload.ListPendingRenditionsRequest
+	13, // 6: upload.UploadStateService.UpdateRendition:input_type -> upload.UpdateRenditionRequest
+	1,  // 7: upload.UploadStateService.UpdateUploadStatus:output_type -> upload.UpdateUploadStatusResponse
+	3,  // 8: upload.UploadStateService.UpdateUploadStep:output_type -> upload.UpdateUploadStepResponse
+	5,  // 9: upload.UploadStateService.UpdateVideoMetadata:output_type -> upload.UpdateVideoMetadataResponse
+	7,  // 10: upload.UploadStateService.CreateUploadSteps:output_type -> upload.CreateUploadStepsResponse
+	9,  // 11: upload.UploadStateService.CreateRenditions:output_type -> upload.CreateRenditionsResponse
+	12, // 12: upload.UploadStateService.ListPendingRenditions:output_type -> upload.ListPendingRenditionsResponse
+	14, // 13: upload.UploadStateService.UpdateRendition:output_type -> upload.UpdateRenditionResponse
+	7,  // [7:14] is the sub-list for method output_type
+	0,  // [0:7] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_upload_proto_init() }
@@ -502,7 +688,7 @@ func file_upload_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_upload_proto_rawDesc), len(file_upload_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

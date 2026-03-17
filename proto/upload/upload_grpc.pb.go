@@ -13,6 +13,9 @@ type UploadStateServiceServer interface {
 	UpdateUploadStep(context.Context, *UpdateUploadStepRequest) (*UpdateUploadStepResponse, error)
 	UpdateVideoMetadata(context.Context, *UpdateVideoMetadataRequest) (*UpdateVideoMetadataResponse, error)
 	CreateUploadSteps(context.Context, *CreateUploadStepsRequest) (*CreateUploadStepsResponse, error)
+	CreateRenditions(context.Context, *CreateRenditionsRequest) (*CreateRenditionsResponse, error)
+	ListPendingRenditions(context.Context, *ListPendingRenditionsRequest) (*ListPendingRenditionsResponse, error)
+	UpdateRendition(context.Context, *UpdateRenditionRequest) (*UpdateRenditionResponse, error)
 }
 
 type UnimplementedUploadStateServiceServer struct{}
@@ -28,6 +31,15 @@ func (UnimplementedUploadStateServiceServer) UpdateVideoMetadata(context.Context
 }
 func (UnimplementedUploadStateServiceServer) CreateUploadSteps(context.Context, *CreateUploadStepsRequest) (*CreateUploadStepsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUploadSteps not implemented")
+}
+func (UnimplementedUploadStateServiceServer) CreateRenditions(context.Context, *CreateRenditionsRequest) (*CreateRenditionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateRenditions not implemented")
+}
+func (UnimplementedUploadStateServiceServer) ListPendingRenditions(context.Context, *ListPendingRenditionsRequest) (*ListPendingRenditionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPendingRenditions not implemented")
+}
+func (UnimplementedUploadStateServiceServer) UpdateRendition(context.Context, *UpdateRenditionRequest) (*UpdateRenditionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateRendition not implemented")
 }
 
 type UnsafeUploadStateServiceServer interface {
@@ -49,6 +61,9 @@ type UploadStateServiceClient interface {
 	UpdateUploadStep(ctx context.Context, in *UpdateUploadStepRequest, opts ...grpc.CallOption) (*UpdateUploadStepResponse, error)
 	UpdateVideoMetadata(ctx context.Context, in *UpdateVideoMetadataRequest, opts ...grpc.CallOption) (*UpdateVideoMetadataResponse, error)
 	CreateUploadSteps(ctx context.Context, in *CreateUploadStepsRequest, opts ...grpc.CallOption) (*CreateUploadStepsResponse, error)
+	CreateRenditions(ctx context.Context, in *CreateRenditionsRequest, opts ...grpc.CallOption) (*CreateRenditionsResponse, error)
+	ListPendingRenditions(ctx context.Context, in *ListPendingRenditionsRequest, opts ...grpc.CallOption) (*ListPendingRenditionsResponse, error)
+	UpdateRendition(ctx context.Context, in *UpdateRenditionRequest, opts ...grpc.CallOption) (*UpdateRenditionResponse, error)
 }
 
 func (c *uploadStateServiceClient) UpdateUploadStatus(ctx context.Context, in *UpdateUploadStatusRequest, opts ...grpc.CallOption) (*UpdateUploadStatusResponse, error) {
@@ -81,6 +96,33 @@ func (c *uploadStateServiceClient) UpdateVideoMetadata(ctx context.Context, in *
 func (c *uploadStateServiceClient) CreateUploadSteps(ctx context.Context, in *CreateUploadStepsRequest, opts ...grpc.CallOption) (*CreateUploadStepsResponse, error) {
 	out := new(CreateUploadStepsResponse)
 	err := c.cc.Invoke(ctx, "/upload.UploadStateService/CreateUploadSteps", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *uploadStateServiceClient) CreateRenditions(ctx context.Context, in *CreateRenditionsRequest, opts ...grpc.CallOption) (*CreateRenditionsResponse, error) {
+	out := new(CreateRenditionsResponse)
+	err := c.cc.Invoke(ctx, "/upload.UploadStateService/CreateRenditions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *uploadStateServiceClient) ListPendingRenditions(ctx context.Context, in *ListPendingRenditionsRequest, opts ...grpc.CallOption) (*ListPendingRenditionsResponse, error) {
+	out := new(ListPendingRenditionsResponse)
+	err := c.cc.Invoke(ctx, "/upload.UploadStateService/ListPendingRenditions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *uploadStateServiceClient) UpdateRendition(ctx context.Context, in *UpdateRenditionRequest, opts ...grpc.CallOption) (*UpdateRenditionResponse, error) {
+	out := new(UpdateRenditionResponse)
+	err := c.cc.Invoke(ctx, "/upload.UploadStateService/UpdateRendition", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -151,6 +193,51 @@ func _UploadStateService_CreateUploadSteps_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UploadStateService_CreateRenditions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRenditionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadStateServiceServer).CreateRenditions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/upload.UploadStateService/CreateRenditions"}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadStateServiceServer).CreateRenditions(ctx, req.(*CreateRenditionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UploadStateService_ListPendingRenditions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPendingRenditionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadStateServiceServer).ListPendingRenditions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/upload.UploadStateService/ListPendingRenditions"}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadStateServiceServer).ListPendingRenditions(ctx, req.(*ListPendingRenditionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UploadStateService_UpdateRendition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRenditionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadStateServiceServer).UpdateRendition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{Server: srv, FullMethod: "/upload.UploadStateService/UpdateRendition"}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadStateServiceServer).UpdateRendition(ctx, req.(*UpdateRenditionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var UploadStateService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "upload.UploadStateService",
 	HandlerType: (*UploadStateServiceServer)(nil),
@@ -159,6 +246,9 @@ var UploadStateService_ServiceDesc = grpc.ServiceDesc{
 		{MethodName: "UpdateUploadStep", Handler: _UploadStateService_UpdateUploadStep_Handler},
 		{MethodName: "UpdateVideoMetadata", Handler: _UploadStateService_UpdateVideoMetadata_Handler},
 		{MethodName: "CreateUploadSteps", Handler: _UploadStateService_CreateUploadSteps_Handler},
+		{MethodName: "CreateRenditions", Handler: _UploadStateService_CreateRenditions_Handler},
+		{MethodName: "ListPendingRenditions", Handler: _UploadStateService_ListPendingRenditions_Handler},
+		{MethodName: "UpdateRendition", Handler: _UploadStateService_UpdateRendition_Handler},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "upload.proto",

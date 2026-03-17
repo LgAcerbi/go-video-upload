@@ -11,6 +11,9 @@ service UploadStateService {
   rpc UpdateUploadStep(UpdateUploadStepRequest) returns (UpdateUploadStepResponse);
   rpc UpdateVideoMetadata(UpdateVideoMetadataRequest) returns (UpdateVideoMetadataResponse);
   rpc CreateUploadSteps(CreateUploadStepsRequest) returns (CreateUploadStepsResponse);
+  rpc CreateRenditions(CreateRenditionsRequest) returns (CreateRenditionsResponse);
+  rpc ListPendingRenditions(ListPendingRenditionsRequest) returns (ListPendingRenditionsResponse);
+  rpc UpdateRendition(UpdateRenditionRequest) returns (UpdateRenditionResponse);
 }
 
 message UpdateUploadStatusRequest {
@@ -34,8 +37,6 @@ message UpdateVideoMetadataRequest {
   string format = 2;       // container/codec from metadata extraction (empty = no change)
   double duration_sec = 3; // 0 = no change
   string status = 4;       // e.g. "ready" when pipeline completes (empty = no change)
-  int32 width = 5;
-  int32 height = 6;
 }
 
 message UpdateVideoMetadataResponse {}
@@ -46,3 +47,37 @@ message CreateUploadStepsRequest {
 }
 
 message CreateUploadStepsResponse {}
+
+message CreateRenditionsRequest {
+  string video_id = 1;
+  string original_storage_path = 2;
+  int32 original_width = 3;
+  int32 original_height = 4;
+  repeated int32 target_heights = 5;  // e.g. [720, 480, 360]
+}
+
+message CreateRenditionsResponse {}
+
+message ListPendingRenditionsRequest {
+  string video_id = 1;
+}
+
+message PendingRendition {
+  string resolution = 1;  // e.g. "720p"
+  int32 height = 2;
+}
+
+message ListPendingRenditionsResponse {
+  repeated PendingRendition renditions = 1;
+}
+
+message UpdateRenditionRequest {
+  string video_id = 1;
+  string resolution = 2;   // e.g. "720p"
+  string storage_path = 3;
+  int32 width = 4;         // 0 = no change
+  int32 height = 5;        // 0 = no change
+  int32 bitrate_kbps = 6;  // 0 = no change
+}
+
+message UpdateRenditionResponse {}
