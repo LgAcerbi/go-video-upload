@@ -6,6 +6,7 @@ RUN go mod download
 RUN CGO_ENABLED=0 go build -o /metadata ./cmd/server
 
 FROM alpine:latest
+RUN apk add --no-cache ffmpeg
 COPY --from=builder /metadata /metadata
 EXPOSE 50051
 ENTRYPOINT ["/metadata"]

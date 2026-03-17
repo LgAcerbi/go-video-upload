@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
+	"github.com/LgAcerbi/go-video-upload/pkg/metrics"
 	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
 	"github.com/LgAcerbi/go-video-upload/services/metadata/internal/application/services"
 )
@@ -13,6 +14,7 @@ const (
 	pipelineStepsExchange = "pipeline-steps"
 	extractMetadataKey    = "extract_metadata"
 	metadataQueueName     = "metadata-extract_metadata"
+	serviceTagExtractMeta = "extract_metadata"
 )
 
 type stepMessage struct {
@@ -21,7 +23,7 @@ type stepMessage struct {
 	StoragePath string `json:"storage_path"`
 }
 
-func RunExtractMetadataConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.MetadataService, log logger.Logger) error {
+func RunExtractMetadataConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.MetadataService, mw *metrics.Writer, log logger.Logger) error {
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -54,15 +56,24 @@ func RunExtractMetadataConsumer(ctx context.Context, conn *rabbitmq.Connection, 
 			var msg stepMessage
 			if err := json.Unmarshal(d.Body, &msg); err != nil {
 				log.Error("invalid extract_metadata message", "error", err, "body", string(d.Body))
+				if mw != nil {
+					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagExtractMeta, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
+				}
 				_ = d.Nack(false, false)
 				continue
 			}
 			if err := svc.ExtractMetadata(ctx, msg.VideoID, msg.UploadID, msg.StoragePath); err != nil {
 				log.Error("extract metadata failed", "upload_id", msg.UploadID, "error", err)
+				if mw != nil {
+					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagExtractMeta, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
+				}
 				_ = d.Nack(false, false)
 				continue
 			}
 			_ = d.Ack(false)
+			if mw != nil {
+				mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagExtractMeta, "status": "OK"}, map[string]interface{}{"input": string(d.Body)})
+			}
 		}
 	}
 }

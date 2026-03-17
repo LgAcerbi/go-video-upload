@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
+	"github.com/LgAcerbi/go-video-upload/pkg/metrics"
 	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
 	grpcclient "github.com/LgAcerbi/go-video-upload/services/metadata/internal/adapters/grpc"
 	amqp "github.com/LgAcerbi/go-video-upload/services/metadata/internal/adapters/rabbitmq"
@@ -57,11 +58,21 @@ func main() {
 	metadataExtractor := ffprobe.NewExtractor()
 	svc := service.NewMetadataService(uploadClient, stepResultPub, fileFetcher, metadataExtractor, bucket)
 
+	metricsWriter, _ := metrics.NewWriter(metrics.WriterConfig{
+		URL:    os.Getenv("INFLUXDB_URL"),
+		Token:  os.Getenv("INFLUXDB_TOKEN"),
+		Org:    envOrDefault("INFLUXDB_ORG", "org"),
+		Bucket: envOrDefault("INFLUXDB_BUCKET", "metrics"),
+	})
+	if metricsWriter != nil {
+		defer metricsWriter.Close()
+	}
+
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	go func() {
-		if err := amqp.RunExtractMetadataConsumer(runCtx, rabbitConn, svc, log); err != nil && runCtx.Err() == nil {
+		if err := amqp.RunExtractMetadataConsumer(runCtx, rabbitConn, svc, metricsWriter, log); err != nil && runCtx.Err() == nil {
 			log.Error("extract_metadata consumer exited", "error", err)
 		}
 	}()
