@@ -20,19 +20,19 @@ func NewVideoRepository(pool *pgxpool.Pool) ports.VideoRepository {
 
 func (r *VideoRepository) Create(ctx context.Context, v *entities.Video) error {
 	query := `
-		INSERT INTO videos (id, user_id, title, format, status, duration_sec, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+		INSERT INTO videos (id, user_id, title, format, status, duration_sec, width, height, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 	_, err := r.pool.Exec(ctx, query,
-		v.ID, v.UserID, v.Title, util.NullIfEmpty(v.Format), v.Status, v.DurationSec, v.CreatedAt, v.UpdatedAt)
+		v.ID, v.UserID, v.Title, util.NullIfEmpty(v.Format), v.Status, v.DurationSec, v.Width, v.Height, v.CreatedAt, v.UpdatedAt)
 	return err
 }
 
 func (r *VideoRepository) GetByID(ctx context.Context, id string) (*entities.Video, error) {
-	query := `SELECT id, user_id, title, COALESCE(format, ''), status, duration_sec, created_at, updated_at
+	query := `SELECT id, user_id, title, COALESCE(format, ''), status, duration_sec, width, height, created_at, updated_at
 		FROM videos WHERE id = $1 AND deleted_at IS NULL`
 	var v entities.Video
 	err := r.pool.QueryRow(ctx, query, id).Scan(
-		&v.ID, &v.UserID, &v.Title, &v.Format, &v.Status, &v.DurationSec, &v.CreatedAt, &v.UpdatedAt)
+		&v.ID, &v.UserID, &v.Title, &v.Format, &v.Status, &v.DurationSec, &v.Width, &v.Height, &v.CreatedAt, &v.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -40,8 +40,8 @@ func (r *VideoRepository) GetByID(ctx context.Context, id string) (*entities.Vid
 }
 
 func (r *VideoRepository) Update(ctx context.Context, v *entities.Video) error {
-	query := `UPDATE videos SET format = $2, status = $3, duration_sec = $4, updated_at = $5 WHERE id = $1`
-	_, err := r.pool.Exec(ctx, query, v.ID, util.NullIfEmpty(v.Format), v.Status, v.DurationSec, v.UpdatedAt)
+	query := `UPDATE videos SET format = $2, status = $3, duration_sec = $4, width = $5, height = $6, updated_at = $7 WHERE id = $1`
+	_, err := r.pool.Exec(ctx, query, v.ID, util.NullIfEmpty(v.Format), v.Status, v.DurationSec, v.Width, v.Height, v.UpdatedAt)
 	return err
 }
 
@@ -50,7 +50,7 @@ func (r *VideoRepository) ListAll(ctx context.Context, limit int) ([]*entities.V
 		limit = 100
 	}
 	query := `
-		SELECT id, user_id, title, COALESCE(format, ''), status, duration_sec, created_at, updated_at
+		SELECT id, user_id, title, COALESCE(format, ''), status, duration_sec, width, height, created_at, updated_at
 		FROM videos WHERE deleted_at IS NULL
 		ORDER BY created_at DESC
 		LIMIT $1`
@@ -62,7 +62,7 @@ func (r *VideoRepository) ListAll(ctx context.Context, limit int) ([]*entities.V
 	var out []*entities.Video
 	for rows.Next() {
 		var v entities.Video
-		if err := rows.Scan(&v.ID, &v.UserID, &v.Title, &v.Format, &v.Status, &v.DurationSec, &v.CreatedAt, &v.UpdatedAt); err != nil {
+		if err := rows.Scan(&v.ID, &v.UserID, &v.Title, &v.Format, &v.Status, &v.DurationSec, &v.Width, &v.Height, &v.CreatedAt, &v.UpdatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, &v)

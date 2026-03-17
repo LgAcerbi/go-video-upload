@@ -145,7 +145,7 @@ func (s *UploadService) UpdateUploadStep(ctx context.Context, uploadID, step, st
 	return s.uploadStepRepo.UpdateStepStatus(ctx, uploadID, step, status, errorMessage)
 }
 
-func (s *UploadService) UpdateVideoMetadata(ctx context.Context, videoID, format string, durationSec float64, status string) error {
+func (s *UploadService) UpdateVideoMetadata(ctx context.Context, videoID, format string, durationSec float64, status string, width, height int32) error {
 	if videoID == "" {
 		return nil
 	}
@@ -161,6 +161,12 @@ func (s *UploadService) UpdateVideoMetadata(ctx context.Context, videoID, format
 	}
 	if status != "" {
 		v.Status = status
+	}
+	if width > 0 {
+		v.Width = &width
+	}
+	if height > 0 {
+		v.Height = &height
 	}
 	v.UpdatedAt = time.Now()
 	return s.videoRepo.Update(ctx, v)

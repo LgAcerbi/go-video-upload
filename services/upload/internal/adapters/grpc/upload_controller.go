@@ -42,7 +42,7 @@ func (c *UploadStateController) UpdateVideoMetadata(ctx context.Context, req *up
 	if req == nil || req.VideoId == "" {
 		return &upload.UpdateVideoMetadataResponse{}, nil
 	}
-	if err := c.svc.UpdateVideoMetadata(ctx, req.VideoId, req.Format, req.DurationSec, req.Status); err != nil {
+	if err := c.svc.UpdateVideoMetadata(ctx, req.VideoId, req.Format, req.DurationSec, req.Status, req.Width, req.Height); err != nil {
 		return nil, err
 	}
 	return &upload.UpdateVideoMetadataResponse{}, nil
