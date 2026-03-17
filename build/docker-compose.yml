@@ -59,6 +59,10 @@ services:
       RABBITMQ_PORT: "5672"
       RABBITMQ_USER: admin
       RABBITMQ_PASS: admin
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
+      INFLUXDB_ORG: acerbi-dev
+      INFLUXDB_BUCKET: metrics
 
   orchestrator:
     build:
