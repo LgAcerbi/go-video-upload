@@ -101,7 +101,7 @@ func (c *UploadStateController) UpdateRendition(ctx context.Context, req *upload
 	if req.BitrateKbps > 0 {
 		bitrate = &req.BitrateKbps
 	}
-	if err := c.svc.UpdateRendition(ctx, req.VideoId, req.Resolution, req.StoragePath, width, height, bitrate); err != nil {
+	if err := c.svc.UpdateRendition(ctx, req.VideoId, req.Resolution, req.StoragePath, width, height, bitrate, req.Format); err != nil {
 		return nil, err
 	}
 	return &upload.UpdateRenditionResponse{}, nil

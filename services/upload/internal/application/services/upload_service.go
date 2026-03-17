@@ -201,7 +201,7 @@ func (s *UploadService) ListPendingRenditions(ctx context.Context, videoID strin
 	return s.renditionRepo.ListPendingByVideoID(ctx, videoID)
 }
 
-func (s *UploadService) UpdateRendition(ctx context.Context, videoID, resolution, storagePath string, width, height, bitrateKbps *int32) error {
+func (s *UploadService) UpdateRendition(ctx context.Context, videoID, resolution, storagePath string, width, height, bitrateKbps *int32, format string) error {
 	if videoID == "" || resolution == "" || storagePath == "" {
 		return nil
 	}
@@ -222,6 +222,9 @@ func (s *UploadService) UpdateRendition(ctx context.Context, videoID, resolution
 	if bitrateKbps != nil && *bitrateKbps > 0 {
 		b := int(*bitrateKbps)
 		r.BitrateKbps = &b
+	}
+	if format != "" {
+		r.Format = format
 	}
 	return s.renditionRepo.Update(ctx, r)
 }
