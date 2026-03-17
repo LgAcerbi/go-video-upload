@@ -1,6 +1,6 @@
 .app {
   font-family: system-ui, sans-serif;
-  max-width: 28rem;
+  max-width: 64rem;
   margin: 2rem auto;
   padding: 0 1rem;
 }
@@ -87,4 +87,66 @@
   font-size: 0.875rem;
   font-weight: 500;
   min-width: 2.5rem;
+}
+
+.tablesSection {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.tableBlock h2 {
+  font-size: 1.125rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.tableStatus {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0.5rem 0;
+}
+
+.tableStatus.error {
+  color: #b91c1c;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.dataTable th,
+.dataTable td {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dataTable th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #334155;
+}
+
+.dataTable tbody tr:hover {
+  background: #f8fafc;
+}
+
+.dataTable .cellId {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

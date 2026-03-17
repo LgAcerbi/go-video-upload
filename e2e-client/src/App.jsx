@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 const DEFAULT_API_URL = import.meta.env.VITE_UPLOAD_API_URL || 'http://localhost:8080'
 
@@ -10,8 +10,51 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [message, setMessage] = useState({ text: '', error: false })
+  const [uploads, setUploads] = useState([])
+  const [videos, setVideos] = useState([])
+  const [uploadsLoading, setUploadsLoading] = useState(false)
+  const [videosLoading, setVideosLoading] = useState(false)
+  const [uploadsError, setUploadsError] = useState('')
+  const [videosError, setVideosError] = useState('')
 
   const baseUrl = (apiUrl || DEFAULT_API_URL).trim().replace(/\/$/, '')
+
+  const fetchUploads = useCallback(async () => {
+    setUploadsLoading(true)
+    setUploadsError('')
+    try {
+      const res = await fetch(`${baseUrl}/uploads`)
+      if (!res.ok) throw new Error('Failed to load uploads')
+      const data = await res.json()
+      setUploads(data.uploads ?? [])
+    } catch (e) {
+      setUploadsError(e.message || 'Error loading uploads')
+      setUploads([])
+    } finally {
+      setUploadsLoading(false)
+    }
+  }, [baseUrl])
+
+  const fetchVideos = useCallback(async () => {
+    setVideosLoading(true)
+    setVideosError('')
+    try {
+      const res = await fetch(`${baseUrl}/videos`)
+      if (!res.ok) throw new Error('Failed to load videos')
+      const data = await res.json()
+      setVideos(data.videos ?? [])
+    } catch (e) {
+      setVideosError(e.message || 'Error loading videos')
+      setVideos([])
+    } finally {
+      setVideosLoading(false)
+    }
+  }, [baseUrl])
+
+  useEffect(() => {
+    fetchUploads()
+    fetchVideos()
+  }, [fetchUploads, fetchVideos])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -69,8 +112,10 @@ export default function App() {
       setFile(null)
       const fileInput = document.getElementById('file')
       if (fileInput) fileInput.value = ''
+      fetchUploads()
+      fetchVideos()
     } catch (err) {
-      setMessage({ text: err.message || 'Upload failed', error: true })
+      setMessage({ text: err?.message || 'Upload failed', error: true })
     } finally {
       setLoading(false)
       setUploadProgress(0)
@@ -138,6 +183,88 @@ export default function App() {
           {message.text}
         </div>
       )}
+
+      <section className="tablesSection">
+        <div className="tableBlock">
+          <h2>Uploads</h2>
+          {uploadsLoading && <p className="tableStatus">Loading…</p>}
+          {uploadsError && <p className="tableStatus error">{uploadsError}</p>}
+          {!uploadsLoading && !uploadsError && (
+            <div className="tableWrap">
+              <table className="dataTable" aria-label="Uploads">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Video ID</th>
+                    <th>Storage path</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {uploads.length === 0 ? (
+                    <tr><td colSpan={6}>No uploads</td></tr>
+                  ) : (
+                    uploads.map((u) => (
+                      <tr key={u.id}>
+                        <td className="cellId">{u.id}</td>
+                        <td className="cellId">{u.video_id}</td>
+                        <td>{u.storage_path || '—'}</td>
+                        <td>{u.status}</td>
+                        <td>{u.created_at}</td>
+                        <td>{u.updated_at}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div className="tableBlock">
+          <h2>Videos</h2>
+          {videosLoading && <p className="tableStatus">Loading…</p>}
+          {videosError && <p className="tableStatus error">{videosError}</p>}
+          {!videosLoading && !videosError && (
+            <div className="tableWrap">
+              <table className="dataTable" aria-label="Videos">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>User ID</th>
+                    <th>Title</th>
+                    <th>Format</th>
+                    <th>Status</th>
+                    <th>Duration (s)</th>
+                    <th>Created</th>
+                    <th>Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {videos.length === 0 ? (
+                    <tr><td colSpan={8}>No videos</td></tr>
+                  ) : (
+                    videos.map((v) => (
+                      <tr key={v.id}>
+                        <td className="cellId">{v.id}</td>
+                        <td className="cellId">{v.user_id}</td>
+                        <td>{v.title}</td>
+                        <td>{v.format || '—'}</td>
+                        <td>{v.status}</td>
+                        <td>{v.duration_sec != null ? Number(v.duration_sec).toFixed(1) : '—'}</td>
+                        <td>{v.created_at}</td>
+                        <td>{v.updated_at}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   )
 }
