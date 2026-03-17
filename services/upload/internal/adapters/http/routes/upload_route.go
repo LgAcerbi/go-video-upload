@@ -10,6 +10,5 @@ func RegisterUploadRoutes(r chi.Router, c *controller.UploadController) {
 	r.Get("/videos", c.HandleListVideos)
 	r.Post("/videos/upload", c.HandleUpload)
 	r.Post("/videos/upload/presign", c.HandlePresign)
-	r.Put("/videos/upload/put/{video_id}", c.HandlePutUploadProxy)
 	r.Post("/videos/{video_id}/upload/finalize", c.HandleFinalize)
 }

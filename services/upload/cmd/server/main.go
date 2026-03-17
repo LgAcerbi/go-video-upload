@@ -133,9 +133,7 @@ func main() {
 	}()
 
 	r := chi.NewRouter()
-	if envOrDefault("ENVIRONMENT", "development") != "production" {
-		r.Use(middleware.CORS([]string{"http://127.0.0.1", "http://localhost"}))
-	}
+	r.Use(middleware.CORS([]string{"http://127.0.0.1", "http://localhost"}))
 	r.Use(middleware.Metrics(metricsWriter, "upload"))
 	routes.RegisterUploadRoutes(r, uploadController)
 	r.Get("/docs/*", httpSwagger.WrapHandler)

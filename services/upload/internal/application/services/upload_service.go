@@ -105,33 +105,6 @@ func (s *UploadService) RequestPresignURL(ctx context.Context, userID, title str
 	return url, video.ID, nil
 }
 
-var ErrUploadProxy = errors.New("upload proxy error")
-
-func (s *UploadService) UploadToVideoKey(ctx context.Context, videoID string, body io.Reader, contentType string, contentLength int64) error {
-	if videoID == "" {
-		return fmt.Errorf("%w: video_id is required", ErrUploadProxy)
-	}
-	upload, err := s.uploadRepo.GetByVideoID(ctx, videoID)
-	if err != nil {
-		return fmt.Errorf("%w: %v", ErrUploadProxy, err)
-	}
-	if upload.Status != entities.UploadStatusPending {
-		return fmt.Errorf("%w: upload is not pending (status=%s)", ErrUploadProxy, upload.Status)
-	}
-	key := fmt.Sprintf(originalObjectKeyPrefix, videoID)
-	input := &ports.UploadInput{
-		Bucket:        s.bucket,
-		Key:           key,
-		Body:          body,
-		ContentType:   contentType,
-		ContentLength: contentLength,
-	}
-	if err := s.storage.Upload(ctx, input); err != nil {
-		return fmt.Errorf("%w: %v", ErrUploadProxy, err)
-	}
-	return nil
-}
-
 var ErrFinalizeUpload = errors.New("cannot finalize upload")
 
 func (s *UploadService) FinalizeUpload(ctx context.Context, videoID string) error {
