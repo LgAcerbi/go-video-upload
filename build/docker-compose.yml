@@ -1,8 +1,20 @@
 # Application services. Start after infra is running.
-# Usage: docker-compose -f build/docker-compose.yml up -d
-# Assumes: localstack, rabbitmq, postgres, influxdb (and optionally localstack-init) are already up.
+# Usage: docker-compose -f build/docker-compose.yml -p video up -d
+# Assumes: localstack, rabbitmq, postgres, influxdb are already up (same -p video).
+# First time: run once to create DB tables: docker-compose -f build/docker-compose.yml -p video run --rm db-schema
 
 services:
+  db-schema:
+    image: postgres:16-alpine
+    volumes:
+      - ../scripts/create_tables.sql:/scripts/create_tables.sql:ro
+    environment:
+      PGPASSWORD: admin
+    command: ["psql", "-h", "postgres", "-U", "admin", "-d", "admin", "-f", "/scripts/create_tables.sql"]
+    restart: "no"
+    profiles:
+      - tools
+
   upload:
     build:
       context: ..
@@ -26,8 +38,8 @@ services:
       RABBITMQ_PASS: admin
       DATABASE_URL: postgresql://admin:admin@postgres:5432/admin
       INFLUXDB_URL: http://influxdb:8086
-      INFLUXDB_TOKEN: dev-influxdb-token
-      INFLUXDB_ORG: org
+      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
+      INFLUXDB_ORG: acerbi-dev
       INFLUXDB_BUCKET: metrics
 
   metadata:
