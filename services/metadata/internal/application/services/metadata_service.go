@@ -47,7 +47,12 @@ func (s *MetadataService) ExtractMetadata(ctx context.Context, videoID, uploadID
 		return err
 	}
 
-	if err := s.uploadClient.UpdateVideoMetadata(ctx, videoID, format, durationSec, "", width, height); err != nil {
+	if err := s.uploadClient.UpdateVideoMetadata(ctx, videoID, format, durationSec, ""); err != nil {
+		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+		return err
+	}
+	ladder := computeLadder(int(height))
+	if err := s.uploadClient.CreateRenditions(ctx, videoID, storagePath, width, height, ladder); err != nil {
 		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
 		return err
 	}
@@ -56,6 +61,18 @@ func (s *MetadataService) ExtractMetadata(ctx context.Context, videoID, uploadID
 		return err
 	}
 	return s.stepResultPub.PublishStepResult(ctx, uploadID, videoID, stepExtractMetadata, "done", "", storagePath)
+}
+
+var defaultLadder = []int32{1080, 720, 480, 360}
+
+func computeLadder(sourceHeight int) []int32 {
+	var out []int32
+	for _, h := range defaultLadder {
+		if h < int32(sourceHeight) {
+			out = append(out, h)
+		}
+	}
+	return out
 }
 
 func (s *MetadataService) reportFailed(ctx context.Context, uploadID, videoID, storagePath string, err error) {
