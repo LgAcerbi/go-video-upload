@@ -66,3 +66,28 @@ func (r *UploadRepository) UpdateStatus(ctx context.Context, uploadID, status st
 	_, err := r.pool.Exec(ctx, query, uploadID, status)
 	return err
 }
+
+func (r *UploadRepository) ListAll(ctx context.Context, limit int) ([]*entities.Upload, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	query := `
+		SELECT id, video_id, COALESCE(storage_path, ''), status, created_at, updated_at, deleted_at, expires_at
+		FROM uploads WHERE deleted_at IS NULL
+		ORDER BY created_at DESC
+		LIMIT $1`
+	rows, err := r.pool.Query(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*entities.Upload
+	for rows.Next() {
+		var u entities.Upload
+		if err := rows.Scan(&u.ID, &u.VideoID, &u.StoragePath, &u.Status, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt, &u.ExpiresAt); err != nil {
+			return nil, err
+		}
+		out = append(out, &u)
+	}
+	return out, rows.Err()
+}

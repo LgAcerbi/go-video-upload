@@ -199,3 +199,11 @@ func (s *UploadService) CreateUploadSteps(ctx context.Context, uploadID string, 
 	}
 	return s.uploadStepRepo.CreateSteps(ctx, uploadID, steps)
 }
+
+func (s *UploadService) ListUploads(ctx context.Context, limit int) ([]*entities.Upload, error) {
+	return s.uploadRepo.ListAll(ctx, limit)
+}
+
+func (s *UploadService) ListVideos(ctx context.Context, limit int) ([]*entities.Video, error) {
+	return s.videoRepo.ListAll(ctx, limit)
+}

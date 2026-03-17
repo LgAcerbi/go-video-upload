@@ -5,10 +5,12 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
 	service "github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
+	"github.com/LgAcerbi/go-video-upload/services/upload/internal/domain/entities"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -189,4 +191,107 @@ func (c *UploadController) HandlePutUploadProxy(w http.ResponseWriter, r *http.R
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func parseLimit(r *http.Request, defaultLimit int) int {
+	if s := r.URL.Query().Get("limit"); s != "" {
+		if n, err := strconv.Atoi(s); err == nil && n > 0 {
+			return n
+		}
+	}
+	return defaultLimit
+}
+
+// ListUploadsResponseItem is the JSON shape for one upload in list responses.
+type ListUploadsResponseItem struct {
+	ID          string  `json:"id"`
+	VideoID     string  `json:"video_id"`
+	StoragePath string  `json:"storage_path"`
+	Status      string  `json:"status"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
+	ExpiresAt   *string `json:"expires_at,omitempty"`
+}
+
+// ListVideosResponseItem is the JSON shape for one video in list responses.
+type ListVideosResponseItem struct {
+	ID          string   `json:"id"`
+	UserID      string   `json:"user_id"`
+	Title       string   `json:"title"`
+	Format      string   `json:"format"`
+	Status      string   `json:"status"`
+	DurationSec *float64 `json:"duration_sec,omitempty"`
+	CreatedAt   string   `json:"created_at"`
+	UpdatedAt   string   `json:"updated_at"`
+}
+
+// HandleListUploads returns all uploads (GET /uploads).
+func (c *UploadController) HandleListUploads(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	limit := parseLimit(r, 100)
+	list, err := c.svc.ListUploads(r.Context(), limit)
+	if err != nil {
+		c.logger.Error("list uploads failed", "error", err)
+		http.Error(w, "failed to list uploads", http.StatusInternalServerError)
+		return
+	}
+	items := make([]ListUploadsResponseItem, len(list))
+	for i, u := range list {
+		items[i] = uploadToResponseItem(u)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"uploads": items})
+}
+
+// HandleListVideos returns all videos (GET /videos).
+func (c *UploadController) HandleListVideos(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	limit := parseLimit(r, 100)
+	list, err := c.svc.ListVideos(r.Context(), limit)
+	if err != nil {
+		c.logger.Error("list videos failed", "error", err)
+		http.Error(w, "failed to list videos", http.StatusInternalServerError)
+		return
+	}
+	items := make([]ListVideosResponseItem, len(list))
+	for i, v := range list {
+		items[i] = videoToResponseItem(v)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"videos": items})
+}
+
+func uploadToResponseItem(u *entities.Upload) ListUploadsResponseItem {
+	item := ListUploadsResponseItem{
+		ID:          u.ID,
+		VideoID:     u.VideoID,
+		StoragePath: u.StoragePath,
+		Status:      u.Status,
+		CreatedAt:   u.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   u.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
+	if u.ExpiresAt != nil {
+		s := u.ExpiresAt.Format("2006-01-02T15:04:05Z07:00")
+		item.ExpiresAt = &s
+	}
+	return item
+}
+
+func videoToResponseItem(v *entities.Video) ListVideosResponseItem {
+	return ListVideosResponseItem{
+		ID:          v.ID,
+		UserID:      v.UserID,
+		Title:       v.Title,
+		Format:      v.Format,
+		Status:      v.Status,
+		DurationSec: v.DurationSec,
+		CreatedAt:   v.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:   v.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+	}
 }

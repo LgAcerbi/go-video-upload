@@ -44,3 +44,28 @@ func (r *VideoRepository) Update(ctx context.Context, v *entities.Video) error {
 	_, err := r.pool.Exec(ctx, query, v.ID, util.NullIfEmpty(v.Format), v.Status, v.DurationSec, v.UpdatedAt)
 	return err
 }
+
+func (r *VideoRepository) ListAll(ctx context.Context, limit int) ([]*entities.Video, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	query := `
+		SELECT id, user_id, title, COALESCE(format, ''), status, duration_sec, created_at, updated_at
+		FROM videos WHERE deleted_at IS NULL
+		ORDER BY created_at DESC
+		LIMIT $1`
+	rows, err := r.pool.Query(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*entities.Video
+	for rows.Next() {
+		var v entities.Video
+		if err := rows.Scan(&v.ID, &v.UserID, &v.Title, &v.Format, &v.Status, &v.DurationSec, &v.CreatedAt, &v.UpdatedAt); err != nil {
+			return nil, err
+		}
+		out = append(out, &v)
+	}
+	return out, rows.Err()
+}

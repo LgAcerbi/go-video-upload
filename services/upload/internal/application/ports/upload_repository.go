@@ -12,4 +12,5 @@ type UploadRepository interface {
 	GetByID(ctx context.Context, uploadID string) (*entities.Upload, error)
 	Update(ctx context.Context, u *entities.Upload) error
 	UpdateStatus(ctx context.Context, uploadID, status string) error
+	ListAll(ctx context.Context, limit int) ([]*entities.Upload, error)
 }

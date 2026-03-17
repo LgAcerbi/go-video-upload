@@ -10,4 +10,5 @@ type VideoRepository interface {
 	Create(ctx context.Context, v *entities.Video) error
 	GetByID(ctx context.Context, id string) (*entities.Video, error)
 	Update(ctx context.Context, v *entities.Video) error
+	ListAll(ctx context.Context, limit int) ([]*entities.Video, error)
 }
