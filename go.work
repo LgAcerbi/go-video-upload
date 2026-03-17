@@ -2,8 +2,8 @@ go 1.24
 
 use (
 	./pkg
-	./services/upload
 	./services/metadata
-	./services/transcode
 	./services/orchestrator
+	./services/transcode
+	./services/upload
 )
