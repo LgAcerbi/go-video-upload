@@ -44,7 +44,7 @@ func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, sv
 				return nil
 			}
 			if mw != nil {
-				mw.Record("message_consumed", map[string]string{"service": serviceTagUploadProcess}, map[string]interface{}{"input": string(d.Body)})
+				mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagUploadProcess}, map[string]interface{}{"input": string(d.Body)})
 			}
 			var msg uploadProcessMessage
 			if err := json.Unmarshal(d.Body, &msg); err != nil {

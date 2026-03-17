@@ -47,7 +47,7 @@ func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *
 				return nil
 			}
 			if mw != nil {
-				mw.Record("message_consumed", map[string]string{"service": serviceTagStepResult}, map[string]interface{}{"input": string(d.Body)})
+				mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagStepResult}, map[string]interface{}{"input": string(d.Body)})
 			}
 			var msg stepResultMessage
 			if err := json.Unmarshal(d.Body, &msg); err != nil {
