@@ -42,7 +42,7 @@ func (c *UploadStateController) UpdateVideoMetadata(ctx context.Context, req *up
 	if req == nil || req.VideoId == "" {
 		return &upload.UpdateVideoMetadataResponse{}, nil
 	}
-	if err := c.svc.UpdateVideoMetadata(ctx, req.VideoId, req.Format, req.DurationSec, req.Status, req.Width, req.Height); err != nil {
+	if err := c.svc.UpdateVideoMetadata(ctx, req.VideoId, req.Format, req.DurationSec, req.Status); err != nil {
 		return nil, err
 	}
 	return &upload.UpdateVideoMetadataResponse{}, nil
@@ -56,4 +56,53 @@ func (c *UploadStateController) CreateUploadSteps(ctx context.Context, req *uplo
 		return nil, err
 	}
 	return &upload.CreateUploadStepsResponse{}, nil
+}
+
+func (c *UploadStateController) CreateRenditions(ctx context.Context, req *upload.CreateRenditionsRequest) (*upload.CreateRenditionsResponse, error) {
+	if req == nil || req.VideoId == "" {
+		return &upload.CreateRenditionsResponse{}, nil
+	}
+	if err := c.svc.CreateRenditions(ctx, req.VideoId, req.OriginalStoragePath, req.OriginalWidth, req.OriginalHeight, req.TargetHeights); err != nil {
+		return nil, err
+	}
+	return &upload.CreateRenditionsResponse{}, nil
+}
+
+func (c *UploadStateController) ListPendingRenditions(ctx context.Context, req *upload.ListPendingRenditionsRequest) (*upload.ListPendingRenditionsResponse, error) {
+	if req == nil || req.VideoId == "" {
+		return &upload.ListPendingRenditionsResponse{}, nil
+	}
+	renditions, err := c.svc.ListPendingRenditions(ctx, req.VideoId)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*upload.PendingRendition, len(renditions))
+	for i, r := range renditions {
+		h := int32(0)
+		if r.Height != nil {
+			h = int32(*r.Height)
+		}
+		out[i] = &upload.PendingRendition{Resolution: r.Resolution, Height: h}
+	}
+	return &upload.ListPendingRenditionsResponse{Renditions: out}, nil
+}
+
+func (c *UploadStateController) UpdateRendition(ctx context.Context, req *upload.UpdateRenditionRequest) (*upload.UpdateRenditionResponse, error) {
+	if req == nil || req.VideoId == "" || req.Resolution == "" || req.StoragePath == "" {
+		return &upload.UpdateRenditionResponse{}, nil
+	}
+	var width, height, bitrate *int32
+	if req.Width > 0 {
+		width = &req.Width
+	}
+	if req.Height > 0 {
+		height = &req.Height
+	}
+	if req.BitrateKbps > 0 {
+		bitrate = &req.BitrateKbps
+	}
+	if err := c.svc.UpdateRendition(ctx, req.VideoId, req.Resolution, req.StoragePath, width, height, bitrate); err != nil {
+		return nil, err
+	}
+	return &upload.UpdateRenditionResponse{}, nil
 }

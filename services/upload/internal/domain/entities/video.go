@@ -13,8 +13,6 @@ type Video struct {
 	Format      string
 	Status      string
 	DurationSec *float64
-	Width       *int32
-	Height      *int32
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   *time.Time

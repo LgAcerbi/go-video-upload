@@ -91,6 +91,7 @@ func main() {
 	defer pool.Close()
 
 	videoRepo := postgres.NewVideoRepository(pool)
+	renditionRepo := postgres.NewRenditionRepository(pool)
 	uploadRepo := postgres.NewUploadRepository(pool)
 	uploadStepRepo := postgres.NewUploadStepRepository(pool)
 
@@ -113,7 +114,7 @@ func main() {
 		defer metricsWriter.Close()
 	}
 
-	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo, uploadStepRepo, uploadProcessPub)
+	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo, uploadStepRepo, renditionRepo, uploadProcessPub)
 	uploadController := controller.NewUploadController(uploadSvc, log)
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcserver.MetricsUnaryInterceptor(metricsWriter, "upload")))

@@ -44,16 +44,18 @@ type UploadService struct {
 	videoRepo        ports.VideoRepository
 	uploadRepo       ports.UploadRepository
 	uploadStepRepo   ports.UploadStepRepository
+	renditionRepo    ports.RenditionRepository
 	uploadProcessPub ports.UploadProcessPublisher
 }
 
-func NewUploadService(storage ports.FileStorageRepository, bucket string, videoRepo ports.VideoRepository, uploadRepo ports.UploadRepository, uploadStepRepo ports.UploadStepRepository, uploadProcessPub ports.UploadProcessPublisher) *UploadService {
+func NewUploadService(storage ports.FileStorageRepository, bucket string, videoRepo ports.VideoRepository, uploadRepo ports.UploadRepository, uploadStepRepo ports.UploadStepRepository, renditionRepo ports.RenditionRepository, uploadProcessPub ports.UploadProcessPublisher) *UploadService {
 	return &UploadService{
 		storage:          storage,
 		bucket:           bucket,
 		videoRepo:        videoRepo,
 		uploadRepo:       uploadRepo,
 		uploadStepRepo:   uploadStepRepo,
+		renditionRepo:    renditionRepo,
 		uploadProcessPub: uploadProcessPub,
 	}
 }
@@ -145,7 +147,7 @@ func (s *UploadService) UpdateUploadStep(ctx context.Context, uploadID, step, st
 	return s.uploadStepRepo.UpdateStepStatus(ctx, uploadID, step, status, errorMessage)
 }
 
-func (s *UploadService) UpdateVideoMetadata(ctx context.Context, videoID, format string, durationSec float64, status string, width, height int32) error {
+func (s *UploadService) UpdateVideoMetadata(ctx context.Context, videoID, format string, durationSec float64, status string) error {
 	if videoID == "" {
 		return nil
 	}
@@ -161,12 +163,6 @@ func (s *UploadService) UpdateVideoMetadata(ctx context.Context, videoID, format
 	}
 	if status != "" {
 		v.Status = status
-	}
-	if width > 0 {
-		v.Width = &width
-	}
-	if height > 0 {
-		v.Height = &height
 	}
 	v.UpdatedAt = time.Now()
 	return s.videoRepo.Update(ctx, v)
@@ -185,4 +181,47 @@ func (s *UploadService) ListUploads(ctx context.Context, limit int) ([]*entities
 
 func (s *UploadService) ListVideos(ctx context.Context, limit int) ([]*entities.Video, error) {
 	return s.videoRepo.ListAll(ctx, limit)
+}
+
+func (s *UploadService) CreateRenditions(ctx context.Context, videoID, originalStoragePath string, originalWidth, originalHeight int32, targetHeights []int32) error {
+	if videoID == "" {
+		return nil
+	}
+	heights := make([]int, len(targetHeights))
+	for i, h := range targetHeights {
+		heights[i] = int(h)
+	}
+	return s.renditionRepo.CreateBatch(ctx, videoID, originalStoragePath, int(originalWidth), int(originalHeight), heights)
+}
+
+func (s *UploadService) ListPendingRenditions(ctx context.Context, videoID string) ([]*entities.Rendition, error) {
+	if videoID == "" {
+		return nil, nil
+	}
+	return s.renditionRepo.ListPendingByVideoID(ctx, videoID)
+}
+
+func (s *UploadService) UpdateRendition(ctx context.Context, videoID, resolution, storagePath string, width, height, bitrateKbps *int32) error {
+	if videoID == "" || resolution == "" || storagePath == "" {
+		return nil
+	}
+	r := &entities.Rendition{
+		VideoID:     videoID,
+		Resolution:  resolution,
+		StoragePath: &storagePath,
+		Status:      entities.RenditionStatusReady,
+	}
+	if width != nil && *width > 0 {
+		w := int(*width)
+		r.Width = &w
+	}
+	if height != nil && *height > 0 {
+		h := int(*height)
+		r.Height = &h
+	}
+	if bitrateKbps != nil && *bitrateKbps > 0 {
+		b := int(*bitrateKbps)
+		r.BitrateKbps = &b
+	}
+	return s.renditionRepo.Update(ctx, r)
 }
