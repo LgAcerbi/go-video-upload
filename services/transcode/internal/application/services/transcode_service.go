@@ -11,19 +11,6 @@ import (
 
 const stepTranscode = "transcode"
 
-var defaultLadder = []int{1080, 720, 480, 360}
-
-// ComputeLadder returns resolution heights strictly less than sourceHeight (original is already stored).
-func ComputeLadder(sourceHeight int) []int {
-	var out []int
-	for _, h := range defaultLadder {
-		if h < sourceHeight {
-			out = append(out, h)
-		}
-	}
-	return out
-}
-
 type TranscodeService struct {
 	uploadClient ports.UploadStateClient
 	fetcher      ports.VideoFileFetcher
@@ -55,6 +42,19 @@ func NewTranscodeService(
 }
 
 func (s *TranscodeService) Transcode(ctx context.Context, videoID, uploadID, storagePath string) error {
+	pending, err := s.uploadClient.ListPendingRenditions(ctx, videoID)
+	if err != nil {
+		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+		return err
+	}
+	if len(pending) == 0 {
+		if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, "done", ""); err != nil {
+			s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+			return err
+		}
+		return s.stepPub.PublishStepResult(ctx, uploadID, videoID, stepTranscode, "done", "", storagePath)
+	}
+
 	path, cleanup, err := s.fetcher.FetchToTempFile(ctx, s.bucket, storagePath)
 	if err != nil {
 		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
@@ -62,20 +62,13 @@ func (s *TranscodeService) Transcode(ctx context.Context, videoID, uploadID, sto
 	}
 	defer cleanup()
 
-	_, height, err := s.prober.Probe(ctx, path)
-	if err != nil {
-		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
-		return err
-	}
-
-	ladder := ComputeLadder(height)
-	for _, h := range ladder {
-		outputPath, cleanupOut, err := s.transcoder.Transcode(ctx, path, h)
+	for _, rend := range pending {
+		outputPath, cleanupOut, err := s.transcoder.Transcode(ctx, path, rend.Height)
 		if err != nil {
-			s.reportFailed(ctx, uploadID, videoID, storagePath, fmt.Errorf("transcode %dp: %w", h, err))
+			s.reportFailed(ctx, uploadID, videoID, storagePath, fmt.Errorf("transcode %s: %w", rend.Resolution, err))
 			return err
 		}
-		key := fmt.Sprintf("videos/%s/%dp.mp4", videoID, h)
+		key := fmt.Sprintf("videos/%s/%s.mp4", videoID, rend.Resolution)
 		fi, err := os.Stat(outputPath)
 		if err != nil {
 			cleanupOut()
@@ -96,6 +89,10 @@ func (s *TranscodeService) Transcode(ctx context.Context, videoID, uploadID, sto
 		}
 		f.Close()
 		cleanupOut()
+		if err := s.uploadClient.UpdateRendition(ctx, videoID, rend.Resolution, key, nil, nil, nil); err != nil {
+			s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+			return err
+		}
 	}
 
 	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, "done", ""); err != nil {

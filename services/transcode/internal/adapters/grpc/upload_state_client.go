@@ -34,6 +34,37 @@ func (c *UploadStateClient) UpdateUploadStep(ctx context.Context, uploadID, step
 	return err
 }
 
+func (c *UploadStateClient) ListPendingRenditions(ctx context.Context, videoID string) ([]ports.PendingRendition, error) {
+	resp, err := c.client.ListPendingRenditions(ctx, &upload.ListPendingRenditionsRequest{VideoId: videoID})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]ports.PendingRendition, len(resp.Renditions))
+	for i, r := range resp.Renditions {
+		out[i] = ports.PendingRendition{Resolution: r.Resolution, Height: int(r.Height)}
+	}
+	return out, nil
+}
+
+func (c *UploadStateClient) UpdateRendition(ctx context.Context, videoID, resolution, storagePath string, width, height, bitrateKbps *int32) error {
+	req := &upload.UpdateRenditionRequest{
+		VideoId:     videoID,
+		Resolution:  resolution,
+		StoragePath: storagePath,
+	}
+	if width != nil {
+		req.Width = *width
+	}
+	if height != nil {
+		req.Height = *height
+	}
+	if bitrateKbps != nil {
+		req.BitrateKbps = *bitrateKbps
+	}
+	_, err := c.client.UpdateRendition(ctx, req)
+	return err
+}
+
 func (c *UploadStateClient) Close() error {
 	return c.conn.Close()
 }
