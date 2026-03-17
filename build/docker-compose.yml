@@ -84,7 +84,6 @@ services:
       context: ..
       dockerfile: services/transcode/Dockerfile
     depends_on:
-      - rabbitmq
       - upload
     environment:
       UPLOAD_GRPC_TARGET: upload:9090
