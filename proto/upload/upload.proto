@@ -78,6 +78,7 @@ message UpdateRenditionRequest {
   int32 width = 4;         // 0 = no change
   int32 height = 5;        // 0 = no change
   int32 bitrate_kbps = 6;  // 0 = no change
+  string format = 7;       // e.g. "mp4", empty = no change
 }
 
 message UpdateRenditionResponse {}
