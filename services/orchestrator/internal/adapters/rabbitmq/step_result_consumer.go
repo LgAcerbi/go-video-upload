@@ -46,21 +46,27 @@ func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *
 			if !ok {
 				return nil
 			}
-			if mw != nil {
-				mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagStepResult}, map[string]interface{}{"input": string(d.Body)})
-			}
 			var msg stepResultMessage
 			if err := json.Unmarshal(d.Body, &msg); err != nil {
 				log.Error("invalid upload-process-step message", "error", err, "body", string(d.Body))
+				if mw != nil {
+					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagStepResult, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
+				}
 				_ = d.Nack(false, false)
 				continue
 			}
 			if err := svc.HandleStepResult(ctx, msg.UploadID, msg.VideoID, msg.Step, msg.Status, msg.ErrorMessage, msg.StoragePath); err != nil {
 				log.Error("handle step result failed", "upload_id", msg.UploadID, "step", msg.Step, "error", err)
+				if mw != nil {
+					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagStepResult, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
+				}
 				_ = d.Nack(false, false)
 				continue
 			}
 			_ = d.Ack(false)
+			if mw != nil {
+				mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagStepResult, "status": "OK"}, map[string]interface{}{"input": string(d.Body)})
+			}
 		}
 	}
 }

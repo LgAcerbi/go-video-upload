@@ -43,21 +43,27 @@ func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, sv
 			if !ok {
 				return nil
 			}
-			if mw != nil {
-				mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagUploadProcess}, map[string]interface{}{"input": string(d.Body)})
-			}
 			var msg uploadProcessMessage
 			if err := json.Unmarshal(d.Body, &msg); err != nil {
 				log.Error("invalid upload-process message", "error", err, "body", string(d.Body))
+				if mw != nil {
+					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagUploadProcess, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
+				}
 				_ = d.Nack(false, false)
 				continue
 			}
 			if err := svc.ProcessUploadProcess(ctx, msg.VideoID, msg.UploadID, msg.StoragePath); err != nil {
 				log.Error("process upload failed", "upload_id", msg.UploadID, "error", err)
+				if mw != nil {
+					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagUploadProcess, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
+				}
 				_ = d.Nack(false, false)
 				continue
 			}
 			_ = d.Ack(false)
+			if mw != nil {
+				mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagUploadProcess, "status": "OK"}, map[string]interface{}{"input": string(d.Body)})
+			}
 		}
 	}
 }
