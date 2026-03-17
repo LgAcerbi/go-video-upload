@@ -41,13 +41,13 @@ func (s *MetadataService) ExtractMetadata(ctx context.Context, videoID, uploadID
 	}
 	defer cleanup()
 
-	format, durationSec, err := s.metadataExtractor.Extract(ctx, path)
+	format, durationSec, width, height, err := s.metadataExtractor.Extract(ctx, path)
 	if err != nil {
 		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
 		return err
 	}
 
-	if err := s.uploadClient.UpdateVideoMetadata(ctx, videoID, format, durationSec, ""); err != nil {
+	if err := s.uploadClient.UpdateVideoMetadata(ctx, videoID, format, durationSec, "", width, height); err != nil {
 		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
 		return err
 	}

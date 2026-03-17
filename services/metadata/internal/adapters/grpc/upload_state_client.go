@@ -33,12 +33,14 @@ func (c *UploadStateClient) UpdateUploadStep(ctx context.Context, uploadID, step
 	return err
 }
 
-func (c *UploadStateClient) UpdateVideoMetadata(ctx context.Context, videoID, format string, durationSec float64, status string) error {
+func (c *UploadStateClient) UpdateVideoMetadata(ctx context.Context, videoID, format string, durationSec float64, status string, width, height int32) error {
 	_, err := c.client.UpdateVideoMetadata(ctx, &upload.UpdateVideoMetadataRequest{
 		VideoId:     videoID,
 		Format:      format,
 		DurationSec: durationSec,
 		Status:      status,
+		Width:       width,
+		Height:      height,
 	})
 	return err
 }
