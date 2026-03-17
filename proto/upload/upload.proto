@@ -34,6 +34,8 @@ message UpdateVideoMetadataRequest {
   string format = 2;       // container/codec from metadata extraction (empty = no change)
   double duration_sec = 3; // 0 = no change
   string status = 4;       // e.g. "ready" when pipeline completes (empty = no change)
+  int32 width = 5;
+  int32 height = 6;
 }
 
 message UpdateVideoMetadataResponse {}

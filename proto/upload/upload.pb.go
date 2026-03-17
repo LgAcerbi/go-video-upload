@@ -219,6 +219,8 @@ type UpdateVideoMetadataRequest struct {
 	Format        string                 `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`                                // container/codec from metadata extraction (empty = no change)
 	DurationSec   float64                `protobuf:"fixed64,3,opt,name=duration_sec,json=durationSec,proto3" json:"duration_sec,omitempty"` // 0 = no change
 	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`                                // e.g. "ready" when pipeline completes (empty = no change)
+	Width         int32                  `protobuf:"varint,5,opt,name=width,proto3" json:"width,omitempty"`
+	Height        int32                  `protobuf:"varint,6,opt,name=height,proto3" json:"height,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -279,6 +281,20 @@ func (x *UpdateVideoMetadataRequest) GetStatus() string {
 		return x.Status
 	}
 	return ""
+}
+
+func (x *UpdateVideoMetadataRequest) GetWidth() int32 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *UpdateVideoMetadataRequest) GetHeight() int32 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
 }
 
 type UpdateVideoMetadataResponse struct {
