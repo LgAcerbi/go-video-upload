@@ -19,19 +19,21 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	UploadStateService_UpdateUploadStatus_FullMethodName    = "/upload.UploadStateService/UpdateUploadStatus"
-	UploadStateService_UpdateUploadStep_FullMethodName      = "/upload.UploadStateService/UpdateUploadStep"
-	UploadStateService_UpdateVideoMetadata_FullMethodName   = "/upload.UploadStateService/UpdateVideoMetadata"
-	UploadStateService_CreateUploadSteps_FullMethodName     = "/upload.UploadStateService/CreateUploadSteps"
-	UploadStateService_CreateRenditions_FullMethodName      = "/upload.UploadStateService/CreateRenditions"
-	UploadStateService_ListPendingRenditions_FullMethodName = "/upload.UploadStateService/ListPendingRenditions"
-	UploadStateService_UpdateRendition_FullMethodName       = "/upload.UploadStateService/UpdateRendition"
+	UploadStateService_GetUploadProcessingContext_FullMethodName = "/upload.UploadStateService/GetUploadProcessingContext"
+	UploadStateService_UpdateUploadStatus_FullMethodName         = "/upload.UploadStateService/UpdateUploadStatus"
+	UploadStateService_UpdateUploadStep_FullMethodName           = "/upload.UploadStateService/UpdateUploadStep"
+	UploadStateService_UpdateVideoMetadata_FullMethodName        = "/upload.UploadStateService/UpdateVideoMetadata"
+	UploadStateService_CreateUploadSteps_FullMethodName          = "/upload.UploadStateService/CreateUploadSteps"
+	UploadStateService_CreateRenditions_FullMethodName           = "/upload.UploadStateService/CreateRenditions"
+	UploadStateService_ListPendingRenditions_FullMethodName      = "/upload.UploadStateService/ListPendingRenditions"
+	UploadStateService_UpdateRendition_FullMethodName            = "/upload.UploadStateService/UpdateRendition"
 )
 
 // UploadStateServiceClient is the client API for UploadStateService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UploadStateServiceClient interface {
+	GetUploadProcessingContext(ctx context.Context, in *GetUploadProcessingContextRequest, opts ...grpc.CallOption) (*GetUploadProcessingContextResponse, error)
 	UpdateUploadStatus(ctx context.Context, in *UpdateUploadStatusRequest, opts ...grpc.CallOption) (*UpdateUploadStatusResponse, error)
 	UpdateUploadStep(ctx context.Context, in *UpdateUploadStepRequest, opts ...grpc.CallOption) (*UpdateUploadStepResponse, error)
 	UpdateVideoMetadata(ctx context.Context, in *UpdateVideoMetadataRequest, opts ...grpc.CallOption) (*UpdateVideoMetadataResponse, error)
@@ -47,6 +49,15 @@ type uploadStateServiceClient struct {
 
 func NewUploadStateServiceClient(cc grpc.ClientConnInterface) UploadStateServiceClient {
 	return &uploadStateServiceClient{cc}
+}
+
+func (c *uploadStateServiceClient) GetUploadProcessingContext(ctx context.Context, in *GetUploadProcessingContextRequest, opts ...grpc.CallOption) (*GetUploadProcessingContextResponse, error) {
+	out := new(GetUploadProcessingContextResponse)
+	err := c.cc.Invoke(ctx, UploadStateService_GetUploadProcessingContext_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *uploadStateServiceClient) UpdateUploadStatus(ctx context.Context, in *UpdateUploadStatusRequest, opts ...grpc.CallOption) (*UpdateUploadStatusResponse, error) {
@@ -116,6 +127,7 @@ func (c *uploadStateServiceClient) UpdateRendition(ctx context.Context, in *Upda
 // All implementations must embed UnimplementedUploadStateServiceServer
 // for forward compatibility
 type UploadStateServiceServer interface {
+	GetUploadProcessingContext(context.Context, *GetUploadProcessingContextRequest) (*GetUploadProcessingContextResponse, error)
 	UpdateUploadStatus(context.Context, *UpdateUploadStatusRequest) (*UpdateUploadStatusResponse, error)
 	UpdateUploadStep(context.Context, *UpdateUploadStepRequest) (*UpdateUploadStepResponse, error)
 	UpdateVideoMetadata(context.Context, *UpdateVideoMetadataRequest) (*UpdateVideoMetadataResponse, error)
@@ -130,6 +142,9 @@ type UploadStateServiceServer interface {
 type UnimplementedUploadStateServiceServer struct {
 }
 
+func (UnimplementedUploadStateServiceServer) GetUploadProcessingContext(context.Context, *GetUploadProcessingContextRequest) (*GetUploadProcessingContextResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUploadProcessingContext not implemented")
+}
 func (UnimplementedUploadStateServiceServer) UpdateUploadStatus(context.Context, *UpdateUploadStatusRequest) (*UpdateUploadStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUploadStatus not implemented")
 }
@@ -162,6 +177,24 @@ type UnsafeUploadStateServiceServer interface {
 
 func RegisterUploadStateServiceServer(s grpc.ServiceRegistrar, srv UploadStateServiceServer) {
 	s.RegisterService(&UploadStateService_ServiceDesc, srv)
+}
+
+func _UploadStateService_GetUploadProcessingContext_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUploadProcessingContextRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadStateServiceServer).GetUploadProcessingContext(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UploadStateService_GetUploadProcessingContext_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadStateServiceServer).GetUploadProcessingContext(ctx, req.(*GetUploadProcessingContextRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _UploadStateService_UpdateUploadStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -297,6 +330,10 @@ var UploadStateService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "upload.UploadStateService",
 	HandlerType: (*UploadStateServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetUploadProcessingContext",
+			Handler:    _UploadStateService_GetUploadProcessingContext_Handler,
+		},
 		{
 			MethodName: "UpdateUploadStatus",
 			Handler:    _UploadStateService_UpdateUploadStatus_Handler,

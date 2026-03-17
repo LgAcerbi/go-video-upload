@@ -127,10 +127,17 @@ func (s *UploadService) FinalizeUpload(ctx context.Context, videoID string) erro
 	if err := s.uploadRepo.Update(ctx, upload); err != nil {
 		return fmt.Errorf("update upload: %w", err)
 	}
-	if err := s.uploadProcessPub.PublishUploadProcess(ctx, videoID, upload.ID, storagePath); err != nil {
+	if err := s.uploadProcessPub.PublishUploadProcess(ctx, upload.ID); err != nil {
 		return fmt.Errorf("publish to upload-process queue: %w", err)
 	}
 	return nil
+}
+
+func (s *UploadService) GetUploadByID(ctx context.Context, uploadID string) (*entities.Upload, error) {
+	if uploadID == "" {
+		return nil, fmt.Errorf("upload_id is required")
+	}
+	return s.uploadRepo.GetByID(ctx, uploadID)
 }
 
 func (s *UploadService) UpdateUploadStatus(ctx context.Context, uploadID, status string) error {

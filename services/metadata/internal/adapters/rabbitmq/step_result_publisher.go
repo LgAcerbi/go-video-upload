@@ -12,11 +12,9 @@ const stepResultQueueName = "upload-process-step"
 
 type stepResultMessage struct {
 	UploadID     string `json:"upload_id"`
-	VideoID      string `json:"video_id"`
 	Step         string `json:"step"`
 	Status       string `json:"status"`
 	ErrorMessage string `json:"error_message"`
-	StoragePath  string `json:"storage_path"`
 }
 
 type StepResultPublisher struct {
@@ -27,7 +25,7 @@ func NewStepResultPublisher(conn *rabbitmq.Connection) ports.StepResultPublisher
 	return &StepResultPublisher{conn: conn}
 }
 
-func (p *StepResultPublisher) PublishStepResult(ctx context.Context, uploadID, videoID, step, status, errorMessage, storagePath string) error {
+func (p *StepResultPublisher) PublishStepResult(ctx context.Context, uploadID, step, status, errorMessage string) error {
 	ch, err := p.conn.Channel()
 	if err != nil {
 		return err
@@ -40,11 +38,9 @@ func (p *StepResultPublisher) PublishStepResult(ctx context.Context, uploadID, v
 
 	body, err := json.Marshal(stepResultMessage{
 		UploadID:     uploadID,
-		VideoID:      videoID,
 		Step:         step,
 		Status:       status,
 		ErrorMessage: errorMessage,
-		StoragePath:  storagePath,
 	})
 	if err != nil {
 		return err

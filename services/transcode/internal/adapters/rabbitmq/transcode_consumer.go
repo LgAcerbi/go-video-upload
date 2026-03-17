@@ -18,9 +18,7 @@ const (
 )
 
 type transcodeMessage struct {
-	VideoID     string `json:"video_id"`
-	UploadID    string `json:"upload_id"`
-	StoragePath string `json:"storage_path"`
+	UploadID string `json:"upload_id"`
 }
 
 func RunTranscodeConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.TranscodeService, mw *metrics.Writer, log logger.Logger) error {
@@ -62,7 +60,7 @@ func RunTranscodeConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *s
 				_ = d.Nack(false, false)
 				continue
 			}
-			if err := svc.Transcode(ctx, msg.VideoID, msg.UploadID, msg.StoragePath); err != nil {
+			if err := svc.Transcode(ctx, msg.UploadID); err != nil {
 				log.Error("transcode failed", "upload_id", msg.UploadID, "error", err)
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagTranscode, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})

@@ -11,9 +11,7 @@ import (
 const pipelineStepsExchange = "pipeline-steps"
 
 type stepMessage struct {
-	VideoID     string `json:"video_id"`
-	UploadID    string `json:"upload_id"`
-	StoragePath string `json:"storage_path"`
+	UploadID string `json:"upload_id"`
 }
 
 type StepPublisher struct {
@@ -24,7 +22,7 @@ func NewStepPublisher(conn *rabbitmq.Connection) ports.StepPublisher {
 	return &StepPublisher{conn: conn}
 }
 
-func (p *StepPublisher) PublishStep(ctx context.Context, step, videoID, uploadID, storagePath string) error {
+func (p *StepPublisher) PublishStep(ctx context.Context, step, uploadID string) error {
 	ch, err := p.conn.Channel()
 	if err != nil {
 		return err
@@ -35,11 +33,7 @@ func (p *StepPublisher) PublishStep(ctx context.Context, step, videoID, uploadID
 		return err
 	}
 
-	body, err := json.Marshal(stepMessage{
-		VideoID:     videoID,
-		UploadID:    uploadID,
-		StoragePath: storagePath,
-	})
+	body, err := json.Marshal(stepMessage{UploadID: uploadID})
 	if err != nil {
 		return err
 	}

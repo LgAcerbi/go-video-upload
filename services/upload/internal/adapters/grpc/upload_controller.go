@@ -3,6 +3,9 @@ package grpcserver
 import (
 	"context"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/LgAcerbi/go-video-upload/proto/upload"
 	service "github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
 )
@@ -16,6 +19,28 @@ type UploadStateController struct {
 
 func NewUploadStateController(svc *service.UploadService) *UploadStateController {
 	return &UploadStateController{svc: svc}
+}
+
+func (c *UploadStateController) GetUploadProcessingContext(ctx context.Context, req *upload.GetUploadProcessingContextRequest) (*upload.GetUploadProcessingContextResponse, error) {
+	if req == nil || req.UploadId == "" {
+		return nil, status.Error(codes.InvalidArgument, "upload_id is required")
+	}
+	u, err := c.svc.GetUploadByID(ctx, req.UploadId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "upload not found: %v", err)
+	}
+	resp := &upload.GetUploadProcessingContextResponse{
+		UploadId:         u.ID,
+		VideoId:          u.VideoID,
+		StoragePath:      u.StoragePath,
+		Status:           u.Status,
+		CreatedAtUnixSec: u.CreatedAt.Unix(),
+		UpdatedAtUnixSec: u.UpdatedAt.Unix(),
+	}
+	if u.ExpiresAt != nil {
+		resp.ExpiresAtUnixSec = u.ExpiresAt.Unix()
+	}
+	return resp, nil
 }
 
 func (c *UploadStateController) UpdateUploadStatus(ctx context.Context, req *upload.UpdateUploadStatusRequest) (*upload.UpdateUploadStatusResponse, error) {

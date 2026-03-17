@@ -24,6 +24,17 @@ func NewUploadStateClient(ctx context.Context, target string) (*UploadStateClien
 	return &UploadStateClient{client: client, conn: conn}, nil
 }
 
+func (c *UploadStateClient) GetUploadProcessingContext(ctx context.Context, uploadID string) (*ports.UploadProcessingContext, error) {
+	resp, err := c.client.GetUploadProcessingContext(ctx, &upload.GetUploadProcessingContextRequest{UploadId: uploadID})
+	if err != nil {
+		return nil, err
+	}
+	return &ports.UploadProcessingContext{
+		VideoID:     resp.GetVideoId(),
+		StoragePath: resp.GetStoragePath(),
+	}, nil
+}
+
 func (c *UploadStateClient) UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) error {
 	_, err := c.client.UpdateUploadStep(ctx, &upload.UpdateUploadStepRequest{
 		UploadId:     uploadID,

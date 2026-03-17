@@ -11,9 +11,7 @@ import (
 const uploadProcessQueueName = "upload-process"
 
 type UploadProcessMessage struct {
-	VideoID     string `json:"video_id"`
-	UploadID    string `json:"upload_id"`
-	StoragePath string `json:"storage_path"`
+	UploadID string `json:"upload_id"`
 }
 
 type RabbitMQUploadProcessPublisher struct {
@@ -24,7 +22,7 @@ func NewRabbitMQUploadProcessPublisher(conn *rabbitmq.Connection) ports.UploadPr
 	return &RabbitMQUploadProcessPublisher{conn: conn}
 }
 
-func (p *RabbitMQUploadProcessPublisher) PublishUploadProcess(ctx context.Context, videoID, uploadID, storagePath string) error {
+func (p *RabbitMQUploadProcessPublisher) PublishUploadProcess(ctx context.Context, uploadID string) error {
 	ch, err := p.conn.Channel()
 	if err != nil {
 		return err
@@ -35,11 +33,7 @@ func (p *RabbitMQUploadProcessPublisher) PublishUploadProcess(ctx context.Contex
 		return err
 	}
 
-	body, err := json.Marshal(UploadProcessMessage{
-		VideoID:     videoID,
-		UploadID:    uploadID,
-		StoragePath: storagePath,
-	})
+	body, err := json.Marshal(UploadProcessMessage{UploadID: uploadID})
 	if err != nil {
 		return err
 	}

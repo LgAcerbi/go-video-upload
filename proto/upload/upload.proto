@@ -7,6 +7,7 @@ option go_package = "github.com/LgAcerbi/go-video-upload/proto/upload";
 // UploadStateService is used by workers and the orchestrator to update video/upload state.
 // Only the upload service writes to videos, uploads, and upload_steps; workers call this over gRPC.
 service UploadStateService {
+  rpc GetUploadProcessingContext(GetUploadProcessingContextRequest) returns (GetUploadProcessingContextResponse);
   rpc UpdateUploadStatus(UpdateUploadStatusRequest) returns (UpdateUploadStatusResponse);
   rpc UpdateUploadStep(UpdateUploadStepRequest) returns (UpdateUploadStepResponse);
   rpc UpdateVideoMetadata(UpdateVideoMetadataRequest) returns (UpdateVideoMetadataResponse);
@@ -14,6 +15,21 @@ service UploadStateService {
   rpc CreateRenditions(CreateRenditionsRequest) returns (CreateRenditionsResponse);
   rpc ListPendingRenditions(ListPendingRenditionsRequest) returns (ListPendingRenditionsResponse);
   rpc UpdateRendition(UpdateRenditionRequest) returns (UpdateRenditionResponse);
+}
+
+message GetUploadProcessingContextRequest {
+  string upload_id = 1;
+}
+
+// Returned only when upload exists and deleted_at IS NULL.
+message GetUploadProcessingContextResponse {
+  string upload_id = 1;
+  string video_id = 2;
+  string storage_path = 3;
+  string status = 4;
+  int64 created_at_unix_sec = 5;
+  int64 updated_at_unix_sec = 6;
+  int64 expires_at_unix_sec = 7;  // 0 if not set
 }
 
 message UpdateUploadStatusRequest {

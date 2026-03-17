@@ -14,9 +14,7 @@ const uploadProcessQueueName = "upload-process"
 const serviceTagUploadProcess = "upload-process"
 
 type uploadProcessMessage struct {
-	VideoID     string `json:"video_id"`
-	UploadID    string `json:"upload_id"`
-	StoragePath string `json:"storage_path"`
+	UploadID string `json:"upload_id"`
 }
 
 func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.OrchestratorService, mw *metrics.Writer, log logger.Logger) error {
@@ -52,7 +50,7 @@ func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, sv
 				_ = d.Nack(false, false)
 				continue
 			}
-			if err := svc.ProcessUploadProcess(ctx, msg.VideoID, msg.UploadID, msg.StoragePath); err != nil {
+			if err := svc.ProcessUploadProcess(ctx, msg.UploadID); err != nil {
 				log.Error("process upload failed", "upload_id", msg.UploadID, "error", err)
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagUploadProcess, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})

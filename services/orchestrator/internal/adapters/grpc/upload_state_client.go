@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/LgAcerbi/go-video-upload/proto/upload"
+	"github.com/LgAcerbi/go-video-upload/services/orchestrator/internal/application/ports"
 )
 
 type UploadStateClient struct {
@@ -21,6 +22,17 @@ func NewUploadStateClient(ctx context.Context, target string) (*UploadStateClien
 	}
 	client := upload.NewUploadStateServiceClient(conn)
 	return &UploadStateClient{client: client, conn: conn}, nil
+}
+
+func (c *UploadStateClient) GetUploadProcessingContext(ctx context.Context, uploadID string) (*ports.UploadProcessingContext, error) {
+	resp, err := c.client.GetUploadProcessingContext(ctx, &upload.GetUploadProcessingContextRequest{UploadId: uploadID})
+	if err != nil {
+		return nil, err
+	}
+	return &ports.UploadProcessingContext{
+		VideoID:     resp.GetVideoId(),
+		StoragePath: resp.GetStoragePath(),
+	}, nil
 }
 
 func (c *UploadStateClient) CreateUploadSteps(ctx context.Context, uploadID string, steps []string) error {

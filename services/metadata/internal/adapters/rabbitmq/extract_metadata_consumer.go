@@ -18,9 +18,7 @@ const (
 )
 
 type stepMessage struct {
-	VideoID     string `json:"video_id"`
-	UploadID    string `json:"upload_id"`
-	StoragePath string `json:"storage_path"`
+	UploadID string `json:"upload_id"`
 }
 
 func RunExtractMetadataConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.MetadataService, mw *metrics.Writer, log logger.Logger) error {
@@ -62,7 +60,7 @@ func RunExtractMetadataConsumer(ctx context.Context, conn *rabbitmq.Connection, 
 				_ = d.Nack(false, false)
 				continue
 			}
-			if err := svc.ExtractMetadata(ctx, msg.VideoID, msg.UploadID, msg.StoragePath); err != nil {
+			if err := svc.ExtractMetadata(ctx, msg.UploadID); err != nil {
 				log.Error("extract metadata failed", "upload_id", msg.UploadID, "error", err)
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagExtractMeta, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})

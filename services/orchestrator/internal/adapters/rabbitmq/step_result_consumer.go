@@ -15,11 +15,9 @@ const serviceTagStepResult = "upload-process-step"
 
 type stepResultMessage struct {
 	UploadID     string `json:"upload_id"`
-	VideoID      string `json:"video_id"`
 	Step         string `json:"step"`
 	Status       string `json:"status"`
 	ErrorMessage string `json:"error_message"`
-	StoragePath  string `json:"storage_path"`
 }
 
 func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.OrchestratorService, mw *metrics.Writer, log logger.Logger) error {
@@ -55,7 +53,7 @@ func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *
 				_ = d.Nack(false, false)
 				continue
 			}
-			if err := svc.HandleStepResult(ctx, msg.UploadID, msg.VideoID, msg.Step, msg.Status, msg.ErrorMessage, msg.StoragePath); err != nil {
+			if err := svc.HandleStepResult(ctx, msg.UploadID, msg.Step, msg.Status, msg.ErrorMessage); err != nil {
 				log.Error("handle step result failed", "upload_id", msg.UploadID, "step", msg.Step, "error", err)
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagStepResult, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})

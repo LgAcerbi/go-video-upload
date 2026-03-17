@@ -41,23 +41,31 @@ func NewTranscodeService(
 	}
 }
 
-func (s *TranscodeService) Transcode(ctx context.Context, videoID, uploadID, storagePath string) error {
+func (s *TranscodeService) Transcode(ctx context.Context, uploadID string) error {
+	ctxData, err := s.uploadClient.GetUploadProcessingContext(ctx, uploadID)
+	if err != nil {
+		s.reportFailed(ctx, uploadID, err)
+		return err
+	}
+	videoID := ctxData.VideoID
+	storagePath := ctxData.StoragePath
+
 	pending, err := s.uploadClient.ListPendingRenditions(ctx, videoID)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	if len(pending) == 0 {
 		if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, "done", ""); err != nil {
-			s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+			s.reportFailed(ctx, uploadID, err)
 			return err
 		}
-		return s.stepPub.PublishStepResult(ctx, uploadID, videoID, stepTranscode, "done", "", storagePath)
+		return s.stepPub.PublishStepResult(ctx, uploadID, stepTranscode, "done", "")
 	}
 
 	path, cleanup, err := s.fetcher.FetchToTempFile(ctx, s.bucket, storagePath)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	defer cleanup()
@@ -65,56 +73,56 @@ func (s *TranscodeService) Transcode(ctx context.Context, videoID, uploadID, sto
 	for _, rend := range pending {
 		outputPath, cleanupOut, err := s.transcoder.Transcode(ctx, path, rend.Height)
 		if err != nil {
-			s.reportFailed(ctx, uploadID, videoID, storagePath, fmt.Errorf("transcode %s: %w", rend.Resolution, err))
+			s.reportFailed(ctx, uploadID, fmt.Errorf("transcode %s: %w", rend.Resolution, err))
 			return err
 		}
 		key := fmt.Sprintf("videos/%s/%s.mp4", videoID, rend.Resolution)
 		fi, err := os.Stat(outputPath)
 		if err != nil {
 			cleanupOut()
-			s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+			s.reportFailed(ctx, uploadID, err)
 			return err
 		}
 		f, err := os.Open(outputPath)
 		if err != nil {
 			cleanupOut()
-			s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+			s.reportFailed(ctx, uploadID, err)
 			return err
 		}
 		if err := s.uploader.UploadRendition(ctx, s.bucket, key, f, fi.Size()); err != nil {
 			f.Close()
 			cleanupOut()
-			s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+			s.reportFailed(ctx, uploadID, err)
 			return err
 		}
 		f.Close()
 		probedW, probedH, err := s.prober.Probe(ctx, outputPath)
 		if err != nil {
 			cleanupOut()
-			s.reportFailed(ctx, uploadID, videoID, storagePath, fmt.Errorf("probe %s: %w", rend.Resolution, err))
+			s.reportFailed(ctx, uploadID, fmt.Errorf("probe %s: %w", rend.Resolution, err))
 			return err
 		}
 		w32, h32 := int32(probedW), int32(probedH)
 		cleanupOut()
 		if err := s.uploadClient.UpdateRendition(ctx, videoID, rend.Resolution, key, &w32, &h32, nil, "mp4"); err != nil {
-			s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+			s.reportFailed(ctx, uploadID, err)
 			return err
 		}
 	}
 
 	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, "done", ""); err != nil {
-		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
-	if err := s.stepPub.PublishStepResult(ctx, uploadID, videoID, stepTranscode, "done", "", storagePath); err != nil {
-		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+	if err := s.stepPub.PublishStepResult(ctx, uploadID, stepTranscode, "done", ""); err != nil {
+		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	return nil
 }
 
-func (s *TranscodeService) reportFailed(ctx context.Context, uploadID, videoID, storagePath string, err error) {
+func (s *TranscodeService) reportFailed(ctx context.Context, uploadID string, err error) {
 	errMsg := err.Error()
 	_ = s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, models.UploadStatusFailed, errMsg)
-	_ = s.stepPub.PublishStepResult(ctx, uploadID, videoID, stepTranscode, models.UploadStatusFailed, errMsg, storagePath)
+	_ = s.stepPub.PublishStepResult(ctx, uploadID, stepTranscode, models.UploadStatusFailed, errMsg)
 }

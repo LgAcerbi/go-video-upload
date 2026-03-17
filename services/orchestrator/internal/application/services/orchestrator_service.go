@@ -35,14 +35,14 @@ func NewOrchestratorService(uploadClient ports.UploadStateClient, stepPublisher 
 	}
 }
 
-func (s *OrchestratorService) ProcessUploadProcess(ctx context.Context, videoID, uploadID, storagePath string) error {
+func (s *OrchestratorService) ProcessUploadProcess(ctx context.Context, uploadID string) error {
 	if err := s.uploadClient.CreateUploadSteps(ctx, uploadID, pipelineSteps); err != nil {
 		return err
 	}
-	return s.triggerStep(ctx, firstStep, videoID, uploadID, storagePath)
+	return s.triggerStep(ctx, firstStep, uploadID)
 }
 
-func (s *OrchestratorService) HandleStepResult(ctx context.Context, uploadID, videoID, step, status, errorMessage, storagePath string) error {
+func (s *OrchestratorService) HandleStepResult(ctx context.Context, uploadID, step, status, errorMessage string) error {
 	if status == models.UploadStatusFailed {
 		if err := s.uploadClient.UpdateUploadStatus(ctx, uploadID, models.UploadStatusFailed); err != nil {
 			return err
@@ -60,16 +60,16 @@ func (s *OrchestratorService) HandleStepResult(ctx context.Context, uploadID, vi
 	}
 	switch step {
 	case "extract_metadata":
-		if err := s.triggerStep(ctx, "transcode", videoID, uploadID, storagePath); err != nil {
+		if err := s.triggerStep(ctx, "transcode", uploadID); err != nil {
 			return err
 		}
-		return s.triggerStep(ctx, "generate_thumbnail", videoID, uploadID, storagePath)
+		return s.triggerStep(ctx, "generate_thumbnail", uploadID)
 	case "transcode":
-		return s.triggerStep(ctx, "segment", videoID, uploadID, storagePath)
+		return s.triggerStep(ctx, "segment", uploadID)
 	case "generate_thumbnail":
 		return nil
 	case "segment":
-		return s.triggerStep(ctx, "publish", videoID, uploadID, storagePath)
+		return s.triggerStep(ctx, "publish", uploadID)
 	case "publish":
 		return s.uploadClient.UpdateUploadStatus(ctx, uploadID, models.UploadStatusFinished)
 	default:
@@ -77,9 +77,9 @@ func (s *OrchestratorService) HandleStepResult(ctx context.Context, uploadID, vi
 	}
 }
 
-func (s *OrchestratorService) triggerStep(ctx context.Context, step, videoID, uploadID, storagePath string) error {
+func (s *OrchestratorService) triggerStep(ctx context.Context, step, uploadID string) error {
 	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, step, statusProcessing, ""); err != nil {
 		return err
 	}
-	return s.stepPublisher.PublishStep(ctx, step, videoID, uploadID, storagePath)
+	return s.stepPublisher.PublishStep(ctx, step, uploadID)
 }

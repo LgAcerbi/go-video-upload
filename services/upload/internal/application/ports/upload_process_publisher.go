@@ -3,5 +3,5 @@ package ports
 import "context"
 
 type UploadProcessPublisher interface {
-	PublishUploadProcess(ctx context.Context, videoID, uploadID, storagePath string) error
+	PublishUploadProcess(ctx context.Context, uploadID string) error
 }

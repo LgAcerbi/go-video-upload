@@ -33,34 +33,42 @@ func NewMetadataService(
 	}
 }
 
-func (s *MetadataService) ExtractMetadata(ctx context.Context, videoID, uploadID, storagePath string) error {
+func (s *MetadataService) ExtractMetadata(ctx context.Context, uploadID string) error {
+	ctxData, err := s.uploadClient.GetUploadProcessingContext(ctx, uploadID)
+	if err != nil {
+		s.reportFailed(ctx, uploadID, err)
+		return err
+	}
+	videoID := ctxData.VideoID
+	storagePath := ctxData.StoragePath
+
 	path, cleanup, err := s.fileFetcher.FetchToTempFile(ctx, s.bucket, storagePath)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	defer cleanup()
 
 	format, durationSec, width, height, err := s.metadataExtractor.Extract(ctx, path)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 
 	if err := s.uploadClient.UpdateVideoMetadata(ctx, videoID, format, durationSec, ""); err != nil {
-		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	ladder := computeLadder(int(height))
 	if err := s.uploadClient.CreateRenditions(ctx, videoID, storagePath, width, height, ladder); err != nil {
-		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepExtractMetadata, "done", ""); err != nil {
-		s.reportFailed(ctx, uploadID, videoID, storagePath, err)
+		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
-	return s.stepResultPub.PublishStepResult(ctx, uploadID, videoID, stepExtractMetadata, "done", "", storagePath)
+	return s.stepResultPub.PublishStepResult(ctx, uploadID, stepExtractMetadata, "done", "")
 }
 
 var defaultLadder = []int32{1080, 720, 480, 360}
@@ -75,8 +83,8 @@ func computeLadder(sourceHeight int) []int32 {
 	return out
 }
 
-func (s *MetadataService) reportFailed(ctx context.Context, uploadID, videoID, storagePath string, err error) {
+func (s *MetadataService) reportFailed(ctx context.Context, uploadID string, err error) {
 	errMsg := err.Error()
 	_ = s.uploadClient.UpdateUploadStep(ctx, uploadID, stepExtractMetadata, models.UploadStatusFailed, errMsg)
-	_ = s.stepResultPub.PublishStepResult(ctx, uploadID, videoID, stepExtractMetadata, models.UploadStatusFailed, errMsg, storagePath)
+	_ = s.stepResultPub.PublishStepResult(ctx, uploadID, stepExtractMetadata, models.UploadStatusFailed, errMsg)
 }
