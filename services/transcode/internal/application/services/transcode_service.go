@@ -88,8 +88,15 @@ func (s *TranscodeService) Transcode(ctx context.Context, videoID, uploadID, sto
 			return err
 		}
 		f.Close()
+		probedW, probedH, err := s.prober.Probe(ctx, outputPath)
+		if err != nil {
+			cleanupOut()
+			s.reportFailed(ctx, uploadID, videoID, storagePath, fmt.Errorf("probe %s: %w", rend.Resolution, err))
+			return err
+		}
+		w32, h32 := int32(probedW), int32(probedH)
 		cleanupOut()
-		if err := s.uploadClient.UpdateRendition(ctx, videoID, rend.Resolution, key, nil, nil, nil); err != nil {
+		if err := s.uploadClient.UpdateRendition(ctx, videoID, rend.Resolution, key, &w32, &h32, nil, "mp4"); err != nil {
 			s.reportFailed(ctx, uploadID, videoID, storagePath, err)
 			return err
 		}

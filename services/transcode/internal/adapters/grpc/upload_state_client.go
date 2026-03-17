@@ -46,11 +46,12 @@ func (c *UploadStateClient) ListPendingRenditions(ctx context.Context, videoID s
 	return out, nil
 }
 
-func (c *UploadStateClient) UpdateRendition(ctx context.Context, videoID, resolution, storagePath string, width, height, bitrateKbps *int32) error {
+func (c *UploadStateClient) UpdateRendition(ctx context.Context, videoID, resolution, storagePath string, width, height, bitrateKbps *int32, format string) error {
 	req := &upload.UpdateRenditionRequest{
 		VideoId:     videoID,
 		Resolution:  resolution,
 		StoragePath: storagePath,
+		Format:      format,
 	}
 	if width != nil {
 		req.Width = *width
