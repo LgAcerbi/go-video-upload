@@ -32,13 +32,15 @@ func (r *RenditionRepository) CreateBatch(ctx context.Context, videoID, original
 	if err := r.insertOne(ctx, orig); err != nil {
 		return err
 	}
-	// Insert pending target renditions
+	// Insert pending target renditions (width from aspect ratio so dimensions are set at creation)
 	for _, h := range targetHeights {
 		resolution := fmt.Sprintf("%dp", h)
+		width := scaleWidthToEven(originalWidth, originalHeight, h)
 		rend := &entities.Rendition{
 			VideoID:     videoID,
 			Resolution:  resolution,
 			StoragePath: nil,
+			Width:       ptrInt(width),
 			Height:      ptrInt(h),
 			Status:      entities.RenditionStatusPending,
 		}
@@ -50,6 +52,18 @@ func (r *RenditionRepository) CreateBatch(ctx context.Context, videoID, original
 }
 
 func ptrInt(n int) *int { return &n }
+
+// scaleWidthToEven returns width for target height preserving aspect ratio, rounded to even (matches ffmpeg scale=-2:H).
+func scaleWidthToEven(origW, origH, targetH int) int {
+	if origH <= 0 {
+		return 0
+	}
+	w := (origW * targetH) / origH
+	if w&1 != 0 {
+		w--
+	}
+	return w
+}
 
 func (r *RenditionRepository) insertOne(ctx context.Context, rend *entities.Rendition) error {
 	query := `
