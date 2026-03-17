@@ -101,8 +101,8 @@ func (r *RenditionRepository) ListPendingByVideoID(ctx context.Context, videoID 
 func (r *RenditionRepository) Update(ctx context.Context, rend *entities.Rendition) error {
 	query := `
 		UPDATE video_renditions
-		SET storage_path = $2, status = $3, width = $4, height = $5, bitrate_kbps = $6, format = COALESCE(NULLIF($7::text, ''), format)
-		WHERE video_id = $8 AND resolution = $9`
+		SET storage_path = $1, status = $2, width = $3, height = $4, bitrate_kbps = $5, format = COALESCE(NULLIF($6, ''), format)
+		WHERE video_id = $7 AND resolution = $8`
 	_, err := r.pool.Exec(ctx, query,
 		rend.StoragePath, rend.Status, rend.Width, rend.Height, rend.BitrateKbps, rend.Format, rend.VideoID, rend.Resolution)
 	return err
