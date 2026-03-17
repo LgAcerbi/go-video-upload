@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS videos (
     format          VARCHAR(64),
     status          VARCHAR(32) NOT NULL DEFAULT 'processing',
     duration_sec    NUMERIC(12, 2),
+    width           INT,
+    height          INT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at      TIMESTAMPTZ
