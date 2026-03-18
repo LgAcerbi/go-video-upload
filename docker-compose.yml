@@ -1,0 +1,320 @@
+services:
+  # ----------------------------
+  # Infra (start first)
+  # ----------------------------
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3
+      DEBUG: "0"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  localstack-init:
+    image: amazon/aws-cli:latest
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+    volumes:
+      - ./build/localstack/cors.json:/cors.json:ro
+    entrypoint: >
+      /bin/sh -c "
+      aws --endpoint-url=http://localstack:4566 s3 mb s3://videos --region us-east-1 2>/dev/null || true;
+      aws --endpoint-url=http://localstack:4566 s3api put-bucket-cors --bucket videos --cors-configuration file:///cors.json;
+      echo 'LocalStack bucket videos ready with CORS';
+      "
+    restart: "no"
+
+  influxdb:
+    image: influxdb:2
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: adminadmin
+      DOCKER_INFLUXDB_INIT_ORG: acerbi-dev
+      DOCKER_INFLUXDB_INIT_BUCKET: metrics
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: acerbi-dev-influxdb-token
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running_and_listening"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 25s
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: admin
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d admin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8081:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+  # ----------------------------
+  # Tooling (run on demand)
+  # ----------------------------
+  db-schema:
+    image: postgres:16-alpine
+    volumes:
+      - ./scripts/create_tables.sql:/scripts/create_tables.sql:ro
+    environment:
+      PGPASSWORD: admin
+    command: ["psql", "-h", "postgres", "-U", "admin", "-d", "admin", "-f", "/scripts/create_tables.sql"]
+    restart: "no"
+    profiles:
+      - tools
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ----------------------------
+  # App (start after infra)
+  # ----------------------------
+  upload:
+    build:
+      context: .
+      dockerfile: services/upload/Dockerfile
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    environment:
+      PORT: "8080"
+      GRPC_PORT: "9090"
+      OBJECT_STORAGE: S3
+      S3_ENDPOINT: http://localstack:4566
+      S3_PRESIGN_ENDPOINT: http://localhost:4566
+      S3_REGION: us-east-1
+      S3_BUCKET: videos
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin
+      DATABASE_URL: postgresql://admin:admin@postgres:5432/admin
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
+      INFLUXDB_ORG: acerbi-dev
+      INFLUXDB_BUCKET: metrics
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      localstack-init:
+        condition: service_completed_successfully
+      influxdb:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        echo "Waiting for infra (postgres/rabbitmq/localstack/influxdb)...";
+        until nc -z postgres 5432; do echo "postgres not ready"; sleep 2; done;
+        until nc -z rabbitmq 5672; do echo "rabbitmq not ready"; sleep 2; done;
+        until curl -sf http://localstack:4566/_localstack/health >/dev/null; do echo "localstack not ready"; sleep 2; done;
+        until curl -sf http://influxdb:8086/health >/dev/null; do echo "influxdb not ready"; sleep 2; done;
+        echo "Infra ready. Starting upload...";
+        exec /upload
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/docs/index.html >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  metadata:
+    build:
+      context: .
+      dockerfile: services/metadata/Dockerfile
+    ports:
+      - "50051:50051"
+    environment:
+      UPLOAD_GRPC_TARGET: upload:9090
+      S3_ENDPOINT: http://localstack:4566
+      S3_REGION: us-east-1
+      S3_BUCKET: videos
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
+      INFLUXDB_ORG: acerbi-dev
+      INFLUXDB_BUCKET: metrics
+    depends_on:
+      upload:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      localstack-init:
+        condition: service_completed_successfully
+      influxdb:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        echo "Waiting for infra + upload gRPC...";
+        until nc -z rabbitmq 5672; do echo "rabbitmq not ready"; sleep 2; done;
+        until curl -sf http://localstack:4566/_localstack/health >/dev/null; do echo "localstack not ready"; sleep 2; done;
+        until curl -sf http://influxdb:8086/health >/dev/null; do echo "influxdb not ready"; sleep 2; done;
+        until nc -z upload 9090; do echo "upload gRPC not ready"; sleep 2; done;
+        echo "Ready. Starting metadata...";
+        exec /metadata
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: services/orchestrator/Dockerfile
+    environment:
+      UPLOAD_GRPC_TARGET: upload:9090
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
+      INFLUXDB_ORG: acerbi-dev
+      INFLUXDB_BUCKET: metrics
+    depends_on:
+      upload:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        echo "Waiting for infra + upload gRPC...";
+        until nc -z rabbitmq 5672; do echo "rabbitmq not ready"; sleep 2; done;
+        until curl -sf http://influxdb:8086/health >/dev/null; do echo "influxdb not ready"; sleep 2; done;
+        until nc -z upload 9090; do echo "upload gRPC not ready"; sleep 2; done;
+        echo "Ready. Starting orchestrator...";
+        exec /orchestrator
+
+  transcode:
+    build:
+      context: .
+      dockerfile: services/transcode/Dockerfile
+    environment:
+      UPLOAD_GRPC_TARGET: upload:9090
+      S3_ENDPOINT: http://localstack:4566
+      S3_REGION: us-east-1
+      S3_BUCKET: videos
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
+      INFLUXDB_ORG: acerbi-dev
+      INFLUXDB_BUCKET: metrics
+    depends_on:
+      upload:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      localstack-init:
+        condition: service_completed_successfully
+      influxdb:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        echo "Waiting for infra + upload gRPC...";
+        until nc -z rabbitmq 5672; do echo "rabbitmq not ready"; sleep 2; done;
+        until curl -sf http://localstack:4566/_localstack/health >/dev/null; do echo "localstack not ready"; sleep 2; done;
+        until curl -sf http://influxdb:8086/health >/dev/null; do echo "influxdb not ready"; sleep 2; done;
+        until nc -z upload 9090; do echo "upload gRPC not ready"; sleep 2; done;
+        echo "Ready. Starting transcode...";
+        exec /transcode
+
+  e2e-client:
+    build:
+      context: ./e2e-client
+      dockerfile: Dockerfile
+      args:
+        VITE_UPLOAD_API_URL: http://localhost:8080
+    ports:
+      - "3000:80"
+    depends_on:
+      upload:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  influxdb-data:
+  grafana-data:
+
