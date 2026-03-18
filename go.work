@@ -6,6 +6,8 @@ use (
 	./services/expirer
 	./services/metadata
 	./services/orchestrator
+	./services/segment
+	./services/publish
 	./services/thumbnail
 	./services/transcode
 	./services/upload
