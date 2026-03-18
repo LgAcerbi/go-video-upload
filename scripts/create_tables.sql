@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS videos (
     thumbnail_path  VARCHAR(1024),
     status          VARCHAR(32) NOT NULL DEFAULT 'processing',
     duration_sec    NUMERIC(12, 2),
+    hls_master_path VARCHAR(1024),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at      TIMESTAMPTZ
@@ -74,5 +75,6 @@ CREATE INDEX IF NOT EXISTS idx_video_renditions_status ON video_renditions (vide
 -- Migrations for existing DBs (safe to run multiple times).
 ALTER TABLE videos DROP COLUMN IF EXISTS width, DROP COLUMN IF EXISTS height;
 ALTER TABLE videos ADD COLUMN IF NOT EXISTS thumbnail_path VARCHAR(1024);
+ALTER TABLE videos ADD COLUMN IF NOT EXISTS hls_master_path VARCHAR(1024);
 ALTER TABLE video_renditions ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'pending';
 ALTER TABLE video_renditions ALTER COLUMN storage_path DROP NOT NULL;
