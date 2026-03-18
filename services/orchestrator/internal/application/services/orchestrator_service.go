@@ -72,11 +72,14 @@ func (s *OrchestratorService) HandleStepResult(ctx context.Context, uploadID, st
 		}
 		return nil
 	case "transcode":
-		return s.triggerStep(ctx, "segment", uploadID)
-	case "segment":
-		return s.triggerStep(ctx, "publish", uploadID)
-	case "publish":
+		// Segment and publish have no consumers yet; mark them done and finish the upload.
+		for _, st := range []string{"segment", "publish"} {
+			_ = s.uploadClient.UpdateUploadStep(ctx, uploadID, st, statusDone, "")
+		}
 		return s.uploadClient.UpdateUploadStatus(ctx, uploadID, models.UploadStatusFinished)
+	case "segment", "publish":
+		// No-op if we ever add consumers later; currently handled in transcode case.
+		return nil
 	default:
 		return nil
 	}

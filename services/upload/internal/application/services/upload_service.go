@@ -83,12 +83,18 @@ func (s *UploadService) UploadFile(ctx context.Context, filename string, body io
 	return key, nil
 }
 
+const maxTitleLength = 500
+
 func (s *UploadService) RequestPresignURL(ctx context.Context, userID, title string) (uploadURL, videoID string, err error) {
 	if userID == "" {
 		return "", "", fmt.Errorf("%w: user_id is required", ErrInvalidPresignRequest)
 	}
 	if _, err := uuid.Parse(userID); err != nil {
 		return "", "", fmt.Errorf("%w: user_id must be a valid UUID", ErrInvalidPresignRequest)
+	}
+	title = strings.TrimSpace(title)
+	if len(title) > maxTitleLength {
+		return "", "", fmt.Errorf("%w: title must be at most %d characters", ErrInvalidPresignRequest, maxTitleLength)
 	}
 	video := entities.NewVideo(userID, title)
 	if err := s.videoRepo.Create(ctx, video); err != nil {
@@ -108,6 +114,7 @@ func (s *UploadService) RequestPresignURL(ctx context.Context, userID, title str
 }
 
 var ErrFinalizeUpload = errors.New("cannot finalize upload")
+var ErrFinalizeUploadMissingFile = errors.New("file not found in storage; upload the file to the presigned URL before finalizing")
 
 func (s *UploadService) FinalizeUpload(ctx context.Context, videoID string) error {
 	if videoID == "" {
@@ -121,6 +128,13 @@ func (s *UploadService) FinalizeUpload(ctx context.Context, videoID string) erro
 		return fmt.Errorf("%w: upload is not pending (status=%s)", ErrFinalizeUpload, upload.Status)
 	}
 	storagePath := fmt.Sprintf(originalObjectKeyPrefix, videoID)
+	exists, err := s.storage.Exists(ctx, s.bucket, storagePath)
+	if err != nil {
+		return fmt.Errorf("%w: check storage: %v", ErrFinalizeUpload, err)
+	}
+	if !exists {
+		return fmt.Errorf("%w: %w", ErrFinalizeUpload, ErrFinalizeUploadMissingFile)
+	}
 	upload.StoragePath = storagePath
 	upload.Status = entities.UploadStatusProcessing
 	upload.UpdatedAt = time.Now()
@@ -141,22 +155,31 @@ func (s *UploadService) GetUploadByID(ctx context.Context, uploadID string) (*en
 }
 
 func (s *UploadService) UpdateUploadStatus(ctx context.Context, uploadID, status string) error {
-	if uploadID == "" || status == "" {
-		return nil
+	if uploadID == "" {
+		return fmt.Errorf("upload_id is required")
+	}
+	if status == "" {
+		return fmt.Errorf("status is required")
 	}
 	return s.uploadRepo.UpdateStatus(ctx, uploadID, status)
 }
 
 func (s *UploadService) UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) error {
-	if uploadID == "" || step == "" || status == "" {
-		return nil
+	if uploadID == "" {
+		return fmt.Errorf("upload_id is required")
+	}
+	if step == "" {
+		return fmt.Errorf("step is required")
+	}
+	if status == "" {
+		return fmt.Errorf("status is required")
 	}
 	return s.uploadStepRepo.UpdateStepStatus(ctx, uploadID, step, status, errorMessage)
 }
 
 func (s *UploadService) UpdateVideoMetadata(ctx context.Context, videoID, format string, durationSec float64, status string) error {
 	if videoID == "" {
-		return nil
+		return fmt.Errorf("video_id is required")
 	}
 	v, err := s.videoRepo.GetByID(ctx, videoID)
 	if err != nil {
@@ -176,8 +199,11 @@ func (s *UploadService) UpdateVideoMetadata(ctx context.Context, videoID, format
 }
 
 func (s *UploadService) UpdateVideoThumbnail(ctx context.Context, videoID, thumbnailStoragePath string) error {
-	if videoID == "" || thumbnailStoragePath == "" {
-		return nil
+	if videoID == "" {
+		return fmt.Errorf("video_id is required")
+	}
+	if thumbnailStoragePath == "" {
+		return fmt.Errorf("thumbnail_storage_path is required")
 	}
 	v, err := s.videoRepo.GetByID(ctx, videoID)
 	if err != nil {
@@ -189,8 +215,11 @@ func (s *UploadService) UpdateVideoThumbnail(ctx context.Context, videoID, thumb
 }
 
 func (s *UploadService) CreateUploadSteps(ctx context.Context, uploadID string, steps []string) error {
-	if uploadID == "" || len(steps) == 0 {
-		return nil
+	if uploadID == "" {
+		return fmt.Errorf("upload_id is required")
+	}
+	if len(steps) == 0 {
+		return fmt.Errorf("steps cannot be empty")
 	}
 	return s.uploadStepRepo.CreateSteps(ctx, uploadID, steps)
 }
@@ -232,7 +261,7 @@ func (s *UploadService) ExpireStaleUploads(ctx context.Context, limit int) (Expi
 
 func (s *UploadService) CreateRenditions(ctx context.Context, videoID, originalStoragePath string, originalWidth, originalHeight int32, targetHeights []int32) error {
 	if videoID == "" {
-		return nil
+		return fmt.Errorf("video_id is required")
 	}
 	heights := make([]int, len(targetHeights))
 	for i, h := range targetHeights {
@@ -243,14 +272,20 @@ func (s *UploadService) CreateRenditions(ctx context.Context, videoID, originalS
 
 func (s *UploadService) ListPendingRenditions(ctx context.Context, videoID string) ([]*entities.Rendition, error) {
 	if videoID == "" {
-		return nil, nil
+		return nil, fmt.Errorf("video_id is required")
 	}
 	return s.renditionRepo.ListPendingByVideoID(ctx, videoID)
 }
 
 func (s *UploadService) UpdateRendition(ctx context.Context, videoID, resolution, storagePath string, width, height, bitrateKbps *int32, format string) error {
-	if videoID == "" || resolution == "" || storagePath == "" {
-		return nil
+	if videoID == "" {
+		return fmt.Errorf("video_id is required")
+	}
+	if resolution == "" {
+		return fmt.Errorf("resolution is required")
+	}
+	if storagePath == "" {
+		return fmt.Errorf("storage_path is required")
 	}
 	r := &entities.Rendition{
 		VideoID:     videoID,

@@ -49,6 +49,9 @@ func (r *VideoRepository) ListAll(ctx context.Context, limit int) ([]*entities.V
 	if limit <= 0 {
 		limit = 100
 	}
+	if limit > maxListLimit {
+		limit = maxListLimit
+	}
 	query := `
 		SELECT id, user_id, title, COALESCE(format, ''), COALESCE(thumbnail_path, ''), status, duration_sec, created_at, updated_at
 		FROM videos WHERE deleted_at IS NULL

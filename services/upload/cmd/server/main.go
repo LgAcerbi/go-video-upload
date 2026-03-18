@@ -104,12 +104,15 @@ func main() {
 
 	uploadProcessPub := amqp.NewRabbitMQUploadProcessPublisher(rabbitConn)
 
-	metricsWriter, _ := metrics.NewWriter(metrics.WriterConfig{
+	metricsWriter, metricsErr := metrics.NewWriter(metrics.WriterConfig{
 		URL:    os.Getenv("INFLUXDB_URL"),
 		Token:  os.Getenv("INFLUXDB_TOKEN"),
 		Org:    envOrDefault("INFLUXDB_ORG", "org"),
 		Bucket: envOrDefault("INFLUXDB_BUCKET", "metrics"),
 	})
+	if metricsErr != nil && os.Getenv("INFLUXDB_URL") != "" {
+		log.Info("metrics writer init failed; metrics disabled", "error", metricsErr)
+	}
 	if metricsWriter != nil {
 		defer metricsWriter.Close()
 	}
@@ -133,8 +136,12 @@ func main() {
 		}
 	}()
 
+	corsOrigins := strings.Split(envOrDefault("CORS_ORIGINS", "http://127.0.0.1,http://localhost"), ",")
+	for i := range corsOrigins {
+		corsOrigins[i] = strings.TrimSpace(corsOrigins[i])
+	}
 	r := chi.NewRouter()
-	r.Use(middleware.CORS([]string{"http://127.0.0.1", "http://localhost"}))
+	r.Use(middleware.CORS(corsOrigins))
 	r.Use(middleware.Metrics(metricsWriter, "upload"))
 	routes.RegisterUploadRoutes(r, uploadController)
 	r.Get("/docs/*", httpSwagger.WrapHandler)

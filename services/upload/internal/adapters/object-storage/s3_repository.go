@@ -24,9 +24,9 @@ type S3Config struct {
 }
 
 type S3Repository struct {
-	client         *s3.Client
-	presignClient  *s3.Client
-	bucket         string
+	client        *s3.Client
+	presignClient *s3.Client
+	bucket        string
 }
 
 func NewS3Repository(ctx context.Context, cfg S3Config) (*S3Repository, error) {
@@ -120,4 +120,25 @@ func (s *S3Repository) PresignPut(ctx context.Context, bucket, key string, expir
 		return "", err
 	}
 	return req.URL, nil
+}
+
+func (s *S3Repository) Exists(ctx context.Context, bucket, key string) (bool, error) {
+	if bucket == "" {
+		bucket = s.bucket
+	}
+	if bucket == "" || key == "" {
+		return false, fmt.Errorf("bucket and key are required")
+	}
+	_, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		msg := strings.ToLower(err.Error())
+		if strings.Contains(msg, "404") || strings.Contains(msg, "not found") || strings.Contains(msg, "nosuchkey") {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }

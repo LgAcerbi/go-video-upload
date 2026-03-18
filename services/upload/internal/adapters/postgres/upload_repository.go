@@ -68,9 +68,14 @@ func (r *UploadRepository) UpdateStatus(ctx context.Context, uploadID, status st
 	return err
 }
 
+const maxListLimit = 500
+
 func (r *UploadRepository) ListAll(ctx context.Context, limit int) ([]*entities.Upload, error) {
 	if limit <= 0 {
 		limit = 100
+	}
+	if limit > maxListLimit {
+		limit = maxListLimit
 	}
 	query := `
 		SELECT id, video_id, COALESCE(storage_path, ''), status, created_at, updated_at, deleted_at, expires_at

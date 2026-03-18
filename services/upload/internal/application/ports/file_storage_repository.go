@@ -17,4 +17,5 @@ type UploadInput struct {
 type FileStorageRepository interface {
 	Upload(ctx context.Context, input *UploadInput) error
 	PresignPut(ctx context.Context, bucket, key string, expiry time.Duration) (string, error)
+	Exists(ctx context.Context, bucket, key string) (bool, error)
 }

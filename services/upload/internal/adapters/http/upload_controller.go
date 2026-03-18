@@ -148,7 +148,7 @@ func (c *UploadController) HandleFinalize(w http.ResponseWriter, r *http.Request
 	}
 	if err := c.svc.FinalizeUpload(r.Context(), videoID); err != nil {
 		c.logger.Error("finalize failed", "video_id", videoID, "error", err)
-		if errors.Is(err, service.ErrFinalizeUpload) {
+		if errors.Is(err, service.ErrFinalizeUpload) || errors.Is(err, service.ErrFinalizeUploadMissingFile) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
