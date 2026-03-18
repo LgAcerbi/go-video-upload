@@ -2,8 +2,11 @@ go 1.24
 
 use (
 	./pkg
+	./proto/upload
+	./services/expirer
 	./services/metadata
 	./services/orchestrator
+	./services/thumbnail
 	./services/transcode
 	./services/upload
 )
