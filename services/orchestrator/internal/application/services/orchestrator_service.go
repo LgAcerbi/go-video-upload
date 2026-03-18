@@ -14,14 +14,14 @@ const (
 )
 
 var pipelineSteps = []string{
+	"generate_thumbnail",
 	"extract_metadata",
 	"transcode",
-	"generate_thumbnail",
 	"segment",
 	"publish",
 }
 
-const firstStep = "extract_metadata"
+var initialSteps = []string{"extract_metadata", "generate_thumbnail"}
 
 type OrchestratorService struct {
 	uploadClient   ports.UploadStateClient
@@ -39,7 +39,12 @@ func (s *OrchestratorService) ProcessUploadProcess(ctx context.Context, uploadID
 	if err := s.uploadClient.CreateUploadSteps(ctx, uploadID, pipelineSteps); err != nil {
 		return err
 	}
-	return s.triggerStep(ctx, firstStep, uploadID)
+	for _, step := range initialSteps {
+		if err := s.triggerStep(ctx, step, uploadID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *OrchestratorService) HandleStepResult(ctx context.Context, uploadID, step, status, errorMessage string) error {
@@ -59,15 +64,15 @@ func (s *OrchestratorService) HandleStepResult(ctx context.Context, uploadID, st
 		return err
 	}
 	switch step {
+	case "generate_thumbnail":
+		return nil
 	case "extract_metadata":
 		if err := s.triggerStep(ctx, "transcode", uploadID); err != nil {
 			return err
 		}
-		return s.triggerStep(ctx, "generate_thumbnail", uploadID)
+		return nil
 	case "transcode":
 		return s.triggerStep(ctx, "segment", uploadID)
-	case "generate_thumbnail":
-		return nil
 	case "segment":
 		return s.triggerStep(ctx, "publish", uploadID)
 	case "publish":
