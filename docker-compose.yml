@@ -136,6 +136,7 @@ services:
       - "8080:8080"
       - "9090:9090"
     environment:
+      SECRET_TOKEN: dev-token
       PORT: "8080"
       GRPC_PORT: "9090"
       OBJECT_STORAGE: S3
@@ -177,7 +178,7 @@ services:
         echo "Infra ready. Starting upload...";
         exec /upload
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/docs/index.html >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -sf -H 'X-Api-Key: $$SECRET_TOKEN' http://localhost:8080/docs/index.html >/dev/null || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 20

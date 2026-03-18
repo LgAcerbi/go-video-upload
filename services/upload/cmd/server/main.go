@@ -38,6 +38,11 @@ func main() {
 
 	log := logger.New(&logger.Config{Service: "upload"})
 
+	secretToken := os.Getenv("SECRET_TOKEN")
+	if secretToken == "" {
+		log.Fatal("SECRET_TOKEN is required; set it in the environment to start the application")
+	}
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -141,6 +146,7 @@ func main() {
 		corsOrigins[i] = strings.TrimSpace(corsOrigins[i])
 	}
 	r := chi.NewRouter()
+	r.Use(middleware.RequireAPIKey(secretToken))
 	r.Use(middleware.CORS(corsOrigins))
 	r.Use(middleware.Metrics(metricsWriter, "upload"))
 	routes.RegisterUploadRoutes(r, uploadController)
