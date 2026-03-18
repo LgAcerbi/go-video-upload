@@ -15,9 +15,18 @@ service UploadStateService {
   rpc CreateUploadSteps(CreateUploadStepsRequest) returns (CreateUploadStepsResponse);
   rpc CreateRenditions(CreateRenditionsRequest) returns (CreateRenditionsResponse);
   rpc ListPendingRenditions(ListPendingRenditionsRequest) returns (ListPendingRenditionsResponse);
+  rpc ListReadyRenditions(ListReadyRenditionsRequest) returns (ListReadyRenditionsResponse);
   rpc UpdateRendition(UpdateRenditionRequest) returns (UpdateRenditionResponse);
+  rpc UpdateVideoPlayback(UpdateVideoPlaybackRequest) returns (UpdateVideoPlaybackResponse);
   rpc ExpireStaleUploads(ExpireStaleUploadsRequest) returns (ExpireStaleUploadsResponse);
 }
+
+message UpdateVideoPlaybackRequest {
+  string video_id = 1;
+  string hls_master_path = 2;  // e.g. "videos/{video_id}/hls/master.m3u8"
+}
+
+message UpdateVideoPlaybackResponse {}
 
 message GetUploadProcessingContextRequest {
   string upload_id = 1;
@@ -94,6 +103,19 @@ message PendingRendition {
 
 message ListPendingRenditionsResponse {
   repeated PendingRendition renditions = 1;
+}
+
+message ListReadyRenditionsRequest {
+  string video_id = 1;
+}
+
+message ReadyRendition {
+  string resolution = 1;
+  string storage_path = 2;
+}
+
+message ListReadyRenditionsResponse {
+  repeated ReadyRendition renditions = 1;
 }
 
 message UpdateRenditionRequest {

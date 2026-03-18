@@ -27,7 +27,9 @@ const (
 	UploadStateService_CreateUploadSteps_FullMethodName          = "/upload.UploadStateService/CreateUploadSteps"
 	UploadStateService_CreateRenditions_FullMethodName           = "/upload.UploadStateService/CreateRenditions"
 	UploadStateService_ListPendingRenditions_FullMethodName      = "/upload.UploadStateService/ListPendingRenditions"
+	UploadStateService_ListReadyRenditions_FullMethodName        = "/upload.UploadStateService/ListReadyRenditions"
 	UploadStateService_UpdateRendition_FullMethodName            = "/upload.UploadStateService/UpdateRendition"
+	UploadStateService_UpdateVideoPlayback_FullMethodName        = "/upload.UploadStateService/UpdateVideoPlayback"
 	UploadStateService_ExpireStaleUploads_FullMethodName         = "/upload.UploadStateService/ExpireStaleUploads"
 )
 
@@ -43,7 +45,9 @@ type UploadStateServiceClient interface {
 	CreateUploadSteps(ctx context.Context, in *CreateUploadStepsRequest, opts ...grpc.CallOption) (*CreateUploadStepsResponse, error)
 	CreateRenditions(ctx context.Context, in *CreateRenditionsRequest, opts ...grpc.CallOption) (*CreateRenditionsResponse, error)
 	ListPendingRenditions(ctx context.Context, in *ListPendingRenditionsRequest, opts ...grpc.CallOption) (*ListPendingRenditionsResponse, error)
+	ListReadyRenditions(ctx context.Context, in *ListReadyRenditionsRequest, opts ...grpc.CallOption) (*ListReadyRenditionsResponse, error)
 	UpdateRendition(ctx context.Context, in *UpdateRenditionRequest, opts ...grpc.CallOption) (*UpdateRenditionResponse, error)
+	UpdateVideoPlayback(ctx context.Context, in *UpdateVideoPlaybackRequest, opts ...grpc.CallOption) (*UpdateVideoPlaybackResponse, error)
 	ExpireStaleUploads(ctx context.Context, in *ExpireStaleUploadsRequest, opts ...grpc.CallOption) (*ExpireStaleUploadsResponse, error)
 }
 
@@ -127,9 +131,27 @@ func (c *uploadStateServiceClient) ListPendingRenditions(ctx context.Context, in
 	return out, nil
 }
 
+func (c *uploadStateServiceClient) ListReadyRenditions(ctx context.Context, in *ListReadyRenditionsRequest, opts ...grpc.CallOption) (*ListReadyRenditionsResponse, error) {
+	out := new(ListReadyRenditionsResponse)
+	err := c.cc.Invoke(ctx, UploadStateService_ListReadyRenditions_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *uploadStateServiceClient) UpdateRendition(ctx context.Context, in *UpdateRenditionRequest, opts ...grpc.CallOption) (*UpdateRenditionResponse, error) {
 	out := new(UpdateRenditionResponse)
 	err := c.cc.Invoke(ctx, UploadStateService_UpdateRendition_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *uploadStateServiceClient) UpdateVideoPlayback(ctx context.Context, in *UpdateVideoPlaybackRequest, opts ...grpc.CallOption) (*UpdateVideoPlaybackResponse, error) {
+	out := new(UpdateVideoPlaybackResponse)
+	err := c.cc.Invoke(ctx, UploadStateService_UpdateVideoPlayback_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +179,9 @@ type UploadStateServiceServer interface {
 	CreateUploadSteps(context.Context, *CreateUploadStepsRequest) (*CreateUploadStepsResponse, error)
 	CreateRenditions(context.Context, *CreateRenditionsRequest) (*CreateRenditionsResponse, error)
 	ListPendingRenditions(context.Context, *ListPendingRenditionsRequest) (*ListPendingRenditionsResponse, error)
+	ListReadyRenditions(context.Context, *ListReadyRenditionsRequest) (*ListReadyRenditionsResponse, error)
 	UpdateRendition(context.Context, *UpdateRenditionRequest) (*UpdateRenditionResponse, error)
+	UpdateVideoPlayback(context.Context, *UpdateVideoPlaybackRequest) (*UpdateVideoPlaybackResponse, error)
 	ExpireStaleUploads(context.Context, *ExpireStaleUploadsRequest) (*ExpireStaleUploadsResponse, error)
 	mustEmbedUnimplementedUploadStateServiceServer()
 }
@@ -190,8 +214,14 @@ func (UnimplementedUploadStateServiceServer) CreateRenditions(context.Context, *
 func (UnimplementedUploadStateServiceServer) ListPendingRenditions(context.Context, *ListPendingRenditionsRequest) (*ListPendingRenditionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPendingRenditions not implemented")
 }
+func (UnimplementedUploadStateServiceServer) ListReadyRenditions(context.Context, *ListReadyRenditionsRequest) (*ListReadyRenditionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListReadyRenditions not implemented")
+}
 func (UnimplementedUploadStateServiceServer) UpdateRendition(context.Context, *UpdateRenditionRequest) (*UpdateRenditionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateRendition not implemented")
+}
+func (UnimplementedUploadStateServiceServer) UpdateVideoPlayback(context.Context, *UpdateVideoPlaybackRequest) (*UpdateVideoPlaybackResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateVideoPlayback not implemented")
 }
 func (UnimplementedUploadStateServiceServer) ExpireStaleUploads(context.Context, *ExpireStaleUploadsRequest) (*ExpireStaleUploadsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ExpireStaleUploads not implemented")
@@ -353,6 +383,24 @@ func _UploadStateService_ListPendingRenditions_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UploadStateService_ListReadyRenditions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListReadyRenditionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadStateServiceServer).ListReadyRenditions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UploadStateService_ListReadyRenditions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadStateServiceServer).ListReadyRenditions(ctx, req.(*ListReadyRenditionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UploadStateService_UpdateRendition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateRenditionRequest)
 	if err := dec(in); err != nil {
@@ -367,6 +415,24 @@ func _UploadStateService_UpdateRendition_Handler(srv interface{}, ctx context.Co
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UploadStateServiceServer).UpdateRendition(ctx, req.(*UpdateRenditionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UploadStateService_UpdateVideoPlayback_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateVideoPlaybackRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadStateServiceServer).UpdateVideoPlayback(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UploadStateService_UpdateVideoPlayback_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadStateServiceServer).UpdateVideoPlayback(ctx, req.(*UpdateVideoPlaybackRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -429,8 +495,16 @@ var UploadStateService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UploadStateService_ListPendingRenditions_Handler,
 		},
 		{
+			MethodName: "ListReadyRenditions",
+			Handler:    _UploadStateService_ListReadyRenditions_Handler,
+		},
+		{
 			MethodName: "UpdateRendition",
 			Handler:    _UploadStateService_UpdateRendition_Handler,
+		},
+		{
+			MethodName: "UpdateVideoPlayback",
+			Handler:    _UploadStateService_UpdateVideoPlayback_Handler,
 		},
 		{
 			MethodName: "ExpireStaleUploads",

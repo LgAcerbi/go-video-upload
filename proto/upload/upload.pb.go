@@ -20,6 +20,99 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type UpdateVideoPlaybackRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	VideoId       string `protobuf:"bytes,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+	HlsMasterPath string `protobuf:"bytes,2,opt,name=hls_master_path,json=hlsMasterPath,proto3" json:"hls_master_path,omitempty"` // e.g. "videos/{video_id}/hls/master.m3u8"
+}
+
+func (x *UpdateVideoPlaybackRequest) Reset() {
+	*x = UpdateVideoPlaybackRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_upload_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UpdateVideoPlaybackRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateVideoPlaybackRequest) ProtoMessage() {}
+
+func (x *UpdateVideoPlaybackRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateVideoPlaybackRequest.ProtoReflect.Descriptor instead.
+func (*UpdateVideoPlaybackRequest) Descriptor() ([]byte, []int) {
+	return file_upload_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *UpdateVideoPlaybackRequest) GetVideoId() string {
+	if x != nil {
+		return x.VideoId
+	}
+	return ""
+}
+
+func (x *UpdateVideoPlaybackRequest) GetHlsMasterPath() string {
+	if x != nil {
+		return x.HlsMasterPath
+	}
+	return ""
+}
+
+type UpdateVideoPlaybackResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *UpdateVideoPlaybackResponse) Reset() {
+	*x = UpdateVideoPlaybackResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_upload_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UpdateVideoPlaybackResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateVideoPlaybackResponse) ProtoMessage() {}
+
+func (x *UpdateVideoPlaybackResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateVideoPlaybackResponse.ProtoReflect.Descriptor instead.
+func (*UpdateVideoPlaybackResponse) Descriptor() ([]byte, []int) {
+	return file_upload_proto_rawDescGZIP(), []int{1}
+}
+
 type GetUploadProcessingContextRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -31,7 +124,7 @@ type GetUploadProcessingContextRequest struct {
 func (x *GetUploadProcessingContextRequest) Reset() {
 	*x = GetUploadProcessingContextRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[0]
+		mi := &file_upload_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -44,7 +137,7 @@ func (x *GetUploadProcessingContextRequest) String() string {
 func (*GetUploadProcessingContextRequest) ProtoMessage() {}
 
 func (x *GetUploadProcessingContextRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[0]
+	mi := &file_upload_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +150,7 @@ func (x *GetUploadProcessingContextRequest) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use GetUploadProcessingContextRequest.ProtoReflect.Descriptor instead.
 func (*GetUploadProcessingContextRequest) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{0}
+	return file_upload_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetUploadProcessingContextRequest) GetUploadId() string {
@@ -85,7 +178,7 @@ type GetUploadProcessingContextResponse struct {
 func (x *GetUploadProcessingContextResponse) Reset() {
 	*x = GetUploadProcessingContextResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[1]
+		mi := &file_upload_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -98,7 +191,7 @@ func (x *GetUploadProcessingContextResponse) String() string {
 func (*GetUploadProcessingContextResponse) ProtoMessage() {}
 
 func (x *GetUploadProcessingContextResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[1]
+	mi := &file_upload_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -111,7 +204,7 @@ func (x *GetUploadProcessingContextResponse) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use GetUploadProcessingContextResponse.ProtoReflect.Descriptor instead.
 func (*GetUploadProcessingContextResponse) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{1}
+	return file_upload_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetUploadProcessingContextResponse) GetUploadId() string {
@@ -175,7 +268,7 @@ type UpdateUploadStatusRequest struct {
 func (x *UpdateUploadStatusRequest) Reset() {
 	*x = UpdateUploadStatusRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[2]
+		mi := &file_upload_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -188,7 +281,7 @@ func (x *UpdateUploadStatusRequest) String() string {
 func (*UpdateUploadStatusRequest) ProtoMessage() {}
 
 func (x *UpdateUploadStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[2]
+	mi := &file_upload_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -201,7 +294,7 @@ func (x *UpdateUploadStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUploadStatusRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUploadStatusRequest) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{2}
+	return file_upload_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UpdateUploadStatusRequest) GetUploadId() string {
@@ -227,7 +320,7 @@ type UpdateUploadStatusResponse struct {
 func (x *UpdateUploadStatusResponse) Reset() {
 	*x = UpdateUploadStatusResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[3]
+		mi := &file_upload_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -240,7 +333,7 @@ func (x *UpdateUploadStatusResponse) String() string {
 func (*UpdateUploadStatusResponse) ProtoMessage() {}
 
 func (x *UpdateUploadStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[3]
+	mi := &file_upload_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -253,7 +346,7 @@ func (x *UpdateUploadStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUploadStatusResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUploadStatusResponse) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{3}
+	return file_upload_proto_rawDescGZIP(), []int{5}
 }
 
 type UpdateUploadStepRequest struct {
@@ -270,7 +363,7 @@ type UpdateUploadStepRequest struct {
 func (x *UpdateUploadStepRequest) Reset() {
 	*x = UpdateUploadStepRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[4]
+		mi := &file_upload_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -283,7 +376,7 @@ func (x *UpdateUploadStepRequest) String() string {
 func (*UpdateUploadStepRequest) ProtoMessage() {}
 
 func (x *UpdateUploadStepRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[4]
+	mi := &file_upload_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -296,7 +389,7 @@ func (x *UpdateUploadStepRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUploadStepRequest.ProtoReflect.Descriptor instead.
 func (*UpdateUploadStepRequest) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{4}
+	return file_upload_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *UpdateUploadStepRequest) GetUploadId() string {
@@ -336,7 +429,7 @@ type UpdateUploadStepResponse struct {
 func (x *UpdateUploadStepResponse) Reset() {
 	*x = UpdateUploadStepResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[5]
+		mi := &file_upload_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -349,7 +442,7 @@ func (x *UpdateUploadStepResponse) String() string {
 func (*UpdateUploadStepResponse) ProtoMessage() {}
 
 func (x *UpdateUploadStepResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[5]
+	mi := &file_upload_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -362,7 +455,7 @@ func (x *UpdateUploadStepResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateUploadStepResponse.ProtoReflect.Descriptor instead.
 func (*UpdateUploadStepResponse) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{5}
+	return file_upload_proto_rawDescGZIP(), []int{7}
 }
 
 type UpdateVideoMetadataRequest struct {
@@ -379,7 +472,7 @@ type UpdateVideoMetadataRequest struct {
 func (x *UpdateVideoMetadataRequest) Reset() {
 	*x = UpdateVideoMetadataRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[6]
+		mi := &file_upload_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -392,7 +485,7 @@ func (x *UpdateVideoMetadataRequest) String() string {
 func (*UpdateVideoMetadataRequest) ProtoMessage() {}
 
 func (x *UpdateVideoMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[6]
+	mi := &file_upload_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -405,7 +498,7 @@ func (x *UpdateVideoMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateVideoMetadataRequest.ProtoReflect.Descriptor instead.
 func (*UpdateVideoMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{6}
+	return file_upload_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateVideoMetadataRequest) GetVideoId() string {
@@ -445,7 +538,7 @@ type UpdateVideoMetadataResponse struct {
 func (x *UpdateVideoMetadataResponse) Reset() {
 	*x = UpdateVideoMetadataResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[7]
+		mi := &file_upload_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -458,7 +551,7 @@ func (x *UpdateVideoMetadataResponse) String() string {
 func (*UpdateVideoMetadataResponse) ProtoMessage() {}
 
 func (x *UpdateVideoMetadataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[7]
+	mi := &file_upload_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -471,7 +564,7 @@ func (x *UpdateVideoMetadataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateVideoMetadataResponse.ProtoReflect.Descriptor instead.
 func (*UpdateVideoMetadataResponse) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{7}
+	return file_upload_proto_rawDescGZIP(), []int{9}
 }
 
 type UpdateVideoThumbnailRequest struct {
@@ -486,7 +579,7 @@ type UpdateVideoThumbnailRequest struct {
 func (x *UpdateVideoThumbnailRequest) Reset() {
 	*x = UpdateVideoThumbnailRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[8]
+		mi := &file_upload_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -499,7 +592,7 @@ func (x *UpdateVideoThumbnailRequest) String() string {
 func (*UpdateVideoThumbnailRequest) ProtoMessage() {}
 
 func (x *UpdateVideoThumbnailRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[8]
+	mi := &file_upload_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -512,7 +605,7 @@ func (x *UpdateVideoThumbnailRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateVideoThumbnailRequest.ProtoReflect.Descriptor instead.
 func (*UpdateVideoThumbnailRequest) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{8}
+	return file_upload_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateVideoThumbnailRequest) GetVideoId() string {
@@ -538,7 +631,7 @@ type UpdateVideoThumbnailResponse struct {
 func (x *UpdateVideoThumbnailResponse) Reset() {
 	*x = UpdateVideoThumbnailResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[9]
+		mi := &file_upload_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -551,7 +644,7 @@ func (x *UpdateVideoThumbnailResponse) String() string {
 func (*UpdateVideoThumbnailResponse) ProtoMessage() {}
 
 func (x *UpdateVideoThumbnailResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[9]
+	mi := &file_upload_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -564,7 +657,7 @@ func (x *UpdateVideoThumbnailResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateVideoThumbnailResponse.ProtoReflect.Descriptor instead.
 func (*UpdateVideoThumbnailResponse) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{9}
+	return file_upload_proto_rawDescGZIP(), []int{11}
 }
 
 type CreateUploadStepsRequest struct {
@@ -579,7 +672,7 @@ type CreateUploadStepsRequest struct {
 func (x *CreateUploadStepsRequest) Reset() {
 	*x = CreateUploadStepsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[10]
+		mi := &file_upload_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -592,7 +685,7 @@ func (x *CreateUploadStepsRequest) String() string {
 func (*CreateUploadStepsRequest) ProtoMessage() {}
 
 func (x *CreateUploadStepsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[10]
+	mi := &file_upload_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -605,7 +698,7 @@ func (x *CreateUploadStepsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUploadStepsRequest.ProtoReflect.Descriptor instead.
 func (*CreateUploadStepsRequest) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{10}
+	return file_upload_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CreateUploadStepsRequest) GetUploadId() string {
@@ -631,7 +724,7 @@ type CreateUploadStepsResponse struct {
 func (x *CreateUploadStepsResponse) Reset() {
 	*x = CreateUploadStepsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[11]
+		mi := &file_upload_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -644,7 +737,7 @@ func (x *CreateUploadStepsResponse) String() string {
 func (*CreateUploadStepsResponse) ProtoMessage() {}
 
 func (x *CreateUploadStepsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[11]
+	mi := &file_upload_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -657,7 +750,7 @@ func (x *CreateUploadStepsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateUploadStepsResponse.ProtoReflect.Descriptor instead.
 func (*CreateUploadStepsResponse) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{11}
+	return file_upload_proto_rawDescGZIP(), []int{13}
 }
 
 type CreateRenditionsRequest struct {
@@ -675,7 +768,7 @@ type CreateRenditionsRequest struct {
 func (x *CreateRenditionsRequest) Reset() {
 	*x = CreateRenditionsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[12]
+		mi := &file_upload_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -688,7 +781,7 @@ func (x *CreateRenditionsRequest) String() string {
 func (*CreateRenditionsRequest) ProtoMessage() {}
 
 func (x *CreateRenditionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[12]
+	mi := &file_upload_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -701,7 +794,7 @@ func (x *CreateRenditionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRenditionsRequest.ProtoReflect.Descriptor instead.
 func (*CreateRenditionsRequest) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{12}
+	return file_upload_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CreateRenditionsRequest) GetVideoId() string {
@@ -748,7 +841,7 @@ type CreateRenditionsResponse struct {
 func (x *CreateRenditionsResponse) Reset() {
 	*x = CreateRenditionsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[13]
+		mi := &file_upload_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -761,7 +854,7 @@ func (x *CreateRenditionsResponse) String() string {
 func (*CreateRenditionsResponse) ProtoMessage() {}
 
 func (x *CreateRenditionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[13]
+	mi := &file_upload_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -774,7 +867,7 @@ func (x *CreateRenditionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRenditionsResponse.ProtoReflect.Descriptor instead.
 func (*CreateRenditionsResponse) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{13}
+	return file_upload_proto_rawDescGZIP(), []int{15}
 }
 
 type ListPendingRenditionsRequest struct {
@@ -788,7 +881,7 @@ type ListPendingRenditionsRequest struct {
 func (x *ListPendingRenditionsRequest) Reset() {
 	*x = ListPendingRenditionsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[14]
+		mi := &file_upload_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -801,7 +894,7 @@ func (x *ListPendingRenditionsRequest) String() string {
 func (*ListPendingRenditionsRequest) ProtoMessage() {}
 
 func (x *ListPendingRenditionsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[14]
+	mi := &file_upload_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -814,7 +907,7 @@ func (x *ListPendingRenditionsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPendingRenditionsRequest.ProtoReflect.Descriptor instead.
 func (*ListPendingRenditionsRequest) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{14}
+	return file_upload_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ListPendingRenditionsRequest) GetVideoId() string {
@@ -836,7 +929,7 @@ type PendingRendition struct {
 func (x *PendingRendition) Reset() {
 	*x = PendingRendition{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[15]
+		mi := &file_upload_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -849,7 +942,7 @@ func (x *PendingRendition) String() string {
 func (*PendingRendition) ProtoMessage() {}
 
 func (x *PendingRendition) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[15]
+	mi := &file_upload_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -862,7 +955,7 @@ func (x *PendingRendition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PendingRendition.ProtoReflect.Descriptor instead.
 func (*PendingRendition) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{15}
+	return file_upload_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *PendingRendition) GetResolution() string {
@@ -890,7 +983,7 @@ type ListPendingRenditionsResponse struct {
 func (x *ListPendingRenditionsResponse) Reset() {
 	*x = ListPendingRenditionsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[16]
+		mi := &file_upload_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -903,7 +996,7 @@ func (x *ListPendingRenditionsResponse) String() string {
 func (*ListPendingRenditionsResponse) ProtoMessage() {}
 
 func (x *ListPendingRenditionsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[16]
+	mi := &file_upload_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -916,10 +1009,159 @@ func (x *ListPendingRenditionsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPendingRenditionsResponse.ProtoReflect.Descriptor instead.
 func (*ListPendingRenditionsResponse) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{16}
+	return file_upload_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListPendingRenditionsResponse) GetRenditions() []*PendingRendition {
+	if x != nil {
+		return x.Renditions
+	}
+	return nil
+}
+
+type ListReadyRenditionsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	VideoId string `protobuf:"bytes,1,opt,name=video_id,json=videoId,proto3" json:"video_id,omitempty"`
+}
+
+func (x *ListReadyRenditionsRequest) Reset() {
+	*x = ListReadyRenditionsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_upload_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListReadyRenditionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListReadyRenditionsRequest) ProtoMessage() {}
+
+func (x *ListReadyRenditionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListReadyRenditionsRequest.ProtoReflect.Descriptor instead.
+func (*ListReadyRenditionsRequest) Descriptor() ([]byte, []int) {
+	return file_upload_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListReadyRenditionsRequest) GetVideoId() string {
+	if x != nil {
+		return x.VideoId
+	}
+	return ""
+}
+
+type ReadyRendition struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Resolution  string `protobuf:"bytes,1,opt,name=resolution,proto3" json:"resolution,omitempty"`
+	StoragePath string `protobuf:"bytes,2,opt,name=storage_path,json=storagePath,proto3" json:"storage_path,omitempty"`
+}
+
+func (x *ReadyRendition) Reset() {
+	*x = ReadyRendition{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_upload_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ReadyRendition) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReadyRendition) ProtoMessage() {}
+
+func (x *ReadyRendition) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReadyRendition.ProtoReflect.Descriptor instead.
+func (*ReadyRendition) Descriptor() ([]byte, []int) {
+	return file_upload_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ReadyRendition) GetResolution() string {
+	if x != nil {
+		return x.Resolution
+	}
+	return ""
+}
+
+func (x *ReadyRendition) GetStoragePath() string {
+	if x != nil {
+		return x.StoragePath
+	}
+	return ""
+}
+
+type ListReadyRenditionsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Renditions []*ReadyRendition `protobuf:"bytes,1,rep,name=renditions,proto3" json:"renditions,omitempty"`
+}
+
+func (x *ListReadyRenditionsResponse) Reset() {
+	*x = ListReadyRenditionsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_upload_proto_msgTypes[21]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListReadyRenditionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListReadyRenditionsResponse) ProtoMessage() {}
+
+func (x *ListReadyRenditionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_upload_proto_msgTypes[21]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListReadyRenditionsResponse.ProtoReflect.Descriptor instead.
+func (*ListReadyRenditionsResponse) Descriptor() ([]byte, []int) {
+	return file_upload_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ListReadyRenditionsResponse) GetRenditions() []*ReadyRendition {
 	if x != nil {
 		return x.Renditions
 	}
@@ -943,7 +1185,7 @@ type UpdateRenditionRequest struct {
 func (x *UpdateRenditionRequest) Reset() {
 	*x = UpdateRenditionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[17]
+		mi := &file_upload_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -956,7 +1198,7 @@ func (x *UpdateRenditionRequest) String() string {
 func (*UpdateRenditionRequest) ProtoMessage() {}
 
 func (x *UpdateRenditionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[17]
+	mi := &file_upload_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -969,7 +1211,7 @@ func (x *UpdateRenditionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRenditionRequest.ProtoReflect.Descriptor instead.
 func (*UpdateRenditionRequest) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{17}
+	return file_upload_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *UpdateRenditionRequest) GetVideoId() string {
@@ -1030,7 +1272,7 @@ type UpdateRenditionResponse struct {
 func (x *UpdateRenditionResponse) Reset() {
 	*x = UpdateRenditionResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[18]
+		mi := &file_upload_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1043,7 +1285,7 @@ func (x *UpdateRenditionResponse) String() string {
 func (*UpdateRenditionResponse) ProtoMessage() {}
 
 func (x *UpdateRenditionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[18]
+	mi := &file_upload_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1056,7 +1298,7 @@ func (x *UpdateRenditionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateRenditionResponse.ProtoReflect.Descriptor instead.
 func (*UpdateRenditionResponse) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{18}
+	return file_upload_proto_rawDescGZIP(), []int{23}
 }
 
 type ExpireStaleUploadsRequest struct {
@@ -1070,7 +1312,7 @@ type ExpireStaleUploadsRequest struct {
 func (x *ExpireStaleUploadsRequest) Reset() {
 	*x = ExpireStaleUploadsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[19]
+		mi := &file_upload_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1083,7 +1325,7 @@ func (x *ExpireStaleUploadsRequest) String() string {
 func (*ExpireStaleUploadsRequest) ProtoMessage() {}
 
 func (x *ExpireStaleUploadsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[19]
+	mi := &file_upload_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1096,7 +1338,7 @@ func (x *ExpireStaleUploadsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExpireStaleUploadsRequest.ProtoReflect.Descriptor instead.
 func (*ExpireStaleUploadsRequest) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{19}
+	return file_upload_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ExpireStaleUploadsRequest) GetLimit() int32 {
@@ -1119,7 +1361,7 @@ type ExpireStaleUploadsResponse struct {
 func (x *ExpireStaleUploadsResponse) Reset() {
 	*x = ExpireStaleUploadsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_upload_proto_msgTypes[20]
+		mi := &file_upload_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1132,7 +1374,7 @@ func (x *ExpireStaleUploadsResponse) String() string {
 func (*ExpireStaleUploadsResponse) ProtoMessage() {}
 
 func (x *ExpireStaleUploadsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_upload_proto_msgTypes[20]
+	mi := &file_upload_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1145,7 +1387,7 @@ func (x *ExpireStaleUploadsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExpireStaleUploadsResponse.ProtoReflect.Descriptor instead.
 func (*ExpireStaleUploadsResponse) Descriptor() ([]byte, []int) {
-	return file_upload_proto_rawDescGZIP(), []int{20}
+	return file_upload_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ExpireStaleUploadsResponse) GetFound() int32 {
@@ -1173,7 +1415,15 @@ var File_upload_proto protoreflect.FileDescriptor
 
 var file_upload_proto_rawDesc = []byte{
 	0x0a, 0x0c, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06,
-	0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x40, 0x0a, 0x21, 0x47, 0x65, 0x74, 0x55, 0x70, 0x6c,
+	0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x5f, 0x0a, 0x1a, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x56, 0x69, 0x64, 0x65, 0x6f, 0x50, 0x6c, 0x61, 0x79, 0x62, 0x61, 0x63, 0x6b, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x5f, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x49, 0x64, 0x12,
+	0x26, 0x0a, 0x0f, 0x68, 0x6c, 0x73, 0x5f, 0x6d, 0x61, 0x73, 0x74, 0x65, 0x72, 0x5f, 0x70, 0x61,
+	0x74, 0x68, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x68, 0x6c, 0x73, 0x4d, 0x61, 0x73,
+	0x74, 0x65, 0x72, 0x50, 0x61, 0x74, 0x68, 0x22, 0x1d, 0x0a, 0x1b, 0x55, 0x70, 0x64, 0x61, 0x74,
+	0x65, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x50, 0x6c, 0x61, 0x79, 0x62, 0x61, 0x63, 0x6b, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x40, 0x0a, 0x21, 0x47, 0x65, 0x74, 0x55, 0x70, 0x6c,
 	0x6f, 0x61, 0x64, 0x50, 0x72, 0x6f, 0x63, 0x65, 0x73, 0x73, 0x69, 0x6e, 0x67, 0x43, 0x6f, 0x6e,
 	0x74, 0x65, 0x78, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x75,
 	0x70, 0x6c, 0x6f, 0x61, 0x64, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
@@ -1269,97 +1519,124 @@ var file_upload_proto_rawDesc = []byte{
 	0x6e, 0x73, 0x65, 0x12, 0x38, 0x0a, 0x0a, 0x72, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e,
 	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64,
 	0x2e, 0x50, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f,
-	0x6e, 0x52, 0x0a, 0x72, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0xdf, 0x01,
-	0x0a, 0x16, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f,
-	0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x76, 0x69, 0x64, 0x65,
-	0x6f, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x69, 0x64, 0x65,
-	0x6f, 0x49, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x72, 0x65, 0x73, 0x6f, 0x6c, 0x75, 0x74, 0x69, 0x6f,
-	0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x72, 0x65, 0x73, 0x6f, 0x6c, 0x75, 0x74,
-	0x69, 0x6f, 0x6e, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x5f, 0x70,
-	0x61, 0x74, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x73, 0x74, 0x6f, 0x72, 0x61,
-	0x67, 0x65, 0x50, 0x61, 0x74, 0x68, 0x12, 0x14, 0x0a, 0x05, 0x77, 0x69, 0x64, 0x74, 0x68, 0x18,
-	0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x77, 0x69, 0x64, 0x74, 0x68, 0x12, 0x16, 0x0a, 0x06,
-	0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x68, 0x65,
-	0x69, 0x67, 0x68, 0x74, 0x12, 0x21, 0x0a, 0x0c, 0x62, 0x69, 0x74, 0x72, 0x61, 0x74, 0x65, 0x5f,
-	0x6b, 0x62, 0x70, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0b, 0x62, 0x69, 0x74, 0x72,
-	0x61, 0x74, 0x65, 0x4b, 0x62, 0x70, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x66, 0x6f, 0x72, 0x6d, 0x61,
-	0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x22,
-	0x19, 0x0a, 0x17, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69,
-	0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x31, 0x0a, 0x19, 0x45, 0x78,
-	0x70, 0x69, 0x72, 0x65, 0x53, 0x74, 0x61, 0x6c, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x73,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22, 0x66, 0x0a,
-	0x1a, 0x45, 0x78, 0x70, 0x69, 0x72, 0x65, 0x53, 0x74, 0x61, 0x6c, 0x65, 0x55, 0x70, 0x6c, 0x6f,
-	0x61, 0x64, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x66,
-	0x6f, 0x75, 0x6e, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x66, 0x6f, 0x75, 0x6e,
-	0x64, 0x12, 0x18, 0x0a, 0x07, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x64, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x07, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x73,
-	0x6b, 0x69, 0x70, 0x70, 0x65, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x73, 0x6b,
-	0x69, 0x70, 0x70, 0x65, 0x64, 0x32, 0xc8, 0x07, 0x0a, 0x12, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64,
-	0x53, 0x74, 0x61, 0x74, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x73, 0x0a, 0x1a,
-	0x47, 0x65, 0x74, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x50, 0x72, 0x6f, 0x63, 0x65, 0x73, 0x73,
-	0x69, 0x6e, 0x67, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x12, 0x29, 0x2e, 0x75, 0x70, 0x6c,
+	0x6e, 0x52, 0x0a, 0x72, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x37, 0x0a,
+	0x1a, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x61, 0x64, 0x79, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74,
+	0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x76,
+	0x69, 0x64, 0x65, 0x6f, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76,
+	0x69, 0x64, 0x65, 0x6f, 0x49, 0x64, 0x22, 0x53, 0x0a, 0x0e, 0x52, 0x65, 0x61, 0x64, 0x79, 0x52,
+	0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x0a, 0x0a, 0x72, 0x65, 0x73, 0x6f,
+	0x6c, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x72, 0x65,
+	0x73, 0x6f, 0x6c, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x74, 0x6f, 0x72,
+	0x61, 0x67, 0x65, 0x5f, 0x70, 0x61, 0x74, 0x68, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b,
+	0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x50, 0x61, 0x74, 0x68, 0x22, 0x55, 0x0a, 0x1b, 0x4c,
+	0x69, 0x73, 0x74, 0x52, 0x65, 0x61, 0x64, 0x79, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x36, 0x0a, 0x0a, 0x72, 0x65,
+	0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x16,
+	0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x52, 0x65, 0x61, 0x64, 0x79, 0x52, 0x65, 0x6e,
+	0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x72, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f,
+	0x6e, 0x73, 0x22, 0xdf, 0x01, 0x0a, 0x16, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e,
+	0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a,
+	0x08, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x07, 0x76, 0x69, 0x64, 0x65, 0x6f, 0x49, 0x64, 0x12, 0x1e, 0x0a, 0x0a, 0x72, 0x65, 0x73, 0x6f,
+	0x6c, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x72, 0x65,
+	0x73, 0x6f, 0x6c, 0x75, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x21, 0x0a, 0x0c, 0x73, 0x74, 0x6f, 0x72,
+	0x61, 0x67, 0x65, 0x5f, 0x70, 0x61, 0x74, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b,
+	0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x50, 0x61, 0x74, 0x68, 0x12, 0x14, 0x0a, 0x05, 0x77,
+	0x69, 0x64, 0x74, 0x68, 0x18, 0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x77, 0x69, 0x64, 0x74,
+	0x68, 0x12, 0x16, 0x0a, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x21, 0x0a, 0x0c, 0x62, 0x69, 0x74,
+	0x72, 0x61, 0x74, 0x65, 0x5f, 0x6b, 0x62, 0x70, 0x73, 0x18, 0x06, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x0b, 0x62, 0x69, 0x74, 0x72, 0x61, 0x74, 0x65, 0x4b, 0x62, 0x70, 0x73, 0x12, 0x16, 0x0a, 0x06,
+	0x66, 0x6f, 0x72, 0x6d, 0x61, 0x74, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x66, 0x6f,
+	0x72, 0x6d, 0x61, 0x74, 0x22, 0x19, 0x0a, 0x17, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65,
+	0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
+	0x31, 0x0a, 0x19, 0x45, 0x78, 0x70, 0x69, 0x72, 0x65, 0x53, 0x74, 0x61, 0x6c, 0x65, 0x55, 0x70,
+	0x6c, 0x6f, 0x61, 0x64, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05,
+	0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d,
+	0x69, 0x74, 0x22, 0x66, 0x0a, 0x1a, 0x45, 0x78, 0x70, 0x69, 0x72, 0x65, 0x53, 0x74, 0x61, 0x6c,
+	0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x14, 0x0a, 0x05, 0x66, 0x6f, 0x75, 0x6e, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x05, 0x66, 0x6f, 0x75, 0x6e, 0x64, 0x12, 0x18, 0x0a, 0x07, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65,
+	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x65, 0x78, 0x70, 0x69, 0x72, 0x65, 0x64,
+	0x12, 0x18, 0x0a, 0x07, 0x73, 0x6b, 0x69, 0x70, 0x70, 0x65, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x07, 0x73, 0x6b, 0x69, 0x70, 0x70, 0x65, 0x64, 0x32, 0x88, 0x09, 0x0a, 0x12, 0x55,
+	0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x61, 0x74, 0x65, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63,
+	0x65, 0x12, 0x73, 0x0a, 0x1a, 0x47, 0x65, 0x74, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x50, 0x72,
+	0x6f, 0x63, 0x65, 0x73, 0x73, 0x69, 0x6e, 0x67, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x12,
+	0x29, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x70, 0x6c, 0x6f,
+	0x61, 0x64, 0x50, 0x72, 0x6f, 0x63, 0x65, 0x73, 0x73, 0x69, 0x6e, 0x67, 0x43, 0x6f, 0x6e, 0x74,
+	0x65, 0x78, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x75, 0x70, 0x6c,
 	0x6f, 0x61, 0x64, 0x2e, 0x47, 0x65, 0x74, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x50, 0x72, 0x6f,
 	0x63, 0x65, 0x73, 0x73, 0x69, 0x6e, 0x67, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x47,
-	0x65, 0x74, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x50, 0x72, 0x6f, 0x63, 0x65, 0x73, 0x73, 0x69,
-	0x6e, 0x67, 0x43, 0x6f, 0x6e, 0x74, 0x65, 0x78, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x12, 0x5b, 0x0a, 0x12, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61,
-	0x64, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x21, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64,
-	0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x61,
-	0x74, 0x75, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x75, 0x70, 0x6c,
-	0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64,
-	0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x55,
-	0x0a, 0x10, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74,
-	0x65, 0x70, 0x12, 0x1f, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61,
-	0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x65, 0x70, 0x52, 0x65, 0x71, 0x75,
-	0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64,
-	0x61, 0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x65, 0x70, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5e, 0x0a, 0x13, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56,
-	0x69, 0x64, 0x65, 0x6f, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x12, 0x22, 0x2e, 0x75,
-	0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x69, 0x64, 0x65,
-	0x6f, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x23, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
-	0x56, 0x69, 0x64, 0x65, 0x6f, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73,
-	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x61, 0x0a, 0x14, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56,
-	0x69, 0x64, 0x65, 0x6f, 0x54, 0x68, 0x75, 0x6d, 0x62, 0x6e, 0x61, 0x69, 0x6c, 0x12, 0x23, 0x2e,
-	0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x69, 0x64,
-	0x65, 0x6f, 0x54, 0x68, 0x75, 0x6d, 0x62, 0x6e, 0x61, 0x69, 0x6c, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x24, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5b, 0x0a, 0x12, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
+	0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x12, 0x21, 0x2e, 0x75,
+	0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f,
+	0x61, 0x64, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x22, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x55,
+	0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x61, 0x74, 0x75, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x55, 0x0a, 0x10, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c,
+	0x6f, 0x61, 0x64, 0x53, 0x74, 0x65, 0x70, 0x12, 0x1f, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64,
+	0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x65,
+	0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61,
+	0x64, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74,
+	0x65, 0x70, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5e, 0x0a, 0x13, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74,
+	0x61, 0x12, 0x22, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74,
+	0x65, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55,
+	0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61,
+	0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x61, 0x0a, 0x14, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x54, 0x68, 0x75, 0x6d, 0x62, 0x6e, 0x61,
+	0x69, 0x6c, 0x12, 0x23, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61,
 	0x74, 0x65, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x54, 0x68, 0x75, 0x6d, 0x62, 0x6e, 0x61, 0x69, 0x6c,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a, 0x11, 0x43, 0x72, 0x65, 0x61,
-	0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x65, 0x70, 0x73, 0x12, 0x20, 0x2e,
-	0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c,
-	0x6f, 0x61, 0x64, 0x53, 0x74, 0x65, 0x70, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x21, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x55,
-	0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x65, 0x70, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x55, 0x0a, 0x10, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e, 0x64,
-	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1f, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e,
-	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64,
-	0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e,
-	0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x64, 0x0a, 0x15, 0x4c, 0x69, 0x73,
-	0x74, 0x50, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f,
-	0x6e, 0x73, 0x12, 0x24, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x4c, 0x69, 0x73, 0x74,
-	0x50, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61,
-	0x64, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x6e,
-	0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x52, 0x0a, 0x0f, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69,
-	0x6f, 0x6e, 0x12, 0x1e, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61,
-	0x74, 0x65, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61,
-	0x74, 0x65, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x5b, 0x0a, 0x12, 0x45, 0x78, 0x70, 0x69, 0x72, 0x65, 0x53, 0x74, 0x61,
-	0x6c, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x73, 0x12, 0x21, 0x2e, 0x75, 0x70, 0x6c, 0x6f,
-	0x61, 0x64, 0x2e, 0x45, 0x78, 0x70, 0x69, 0x72, 0x65, 0x53, 0x74, 0x61, 0x6c, 0x65, 0x55, 0x70,
-	0x6c, 0x6f, 0x61, 0x64, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x22, 0x2e, 0x75,
-	0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x45, 0x78, 0x70, 0x69, 0x72, 0x65, 0x53, 0x74, 0x61, 0x6c,
-	0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x42, 0x32, 0x5a, 0x30, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4c,
-	0x67, 0x41, 0x63, 0x65, 0x72, 0x62, 0x69, 0x2f, 0x67, 0x6f, 0x2d, 0x76, 0x69, 0x64, 0x65, 0x6f,
-	0x2d, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x75, 0x70,
-	0x6c, 0x6f, 0x61, 0x64, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64,
+	0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x54, 0x68, 0x75, 0x6d,
+	0x62, 0x6e, 0x61, 0x69, 0x6c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x58, 0x0a,
+	0x11, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x65,
+	0x70, 0x73, 0x12, 0x20, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x43, 0x72, 0x65, 0x61,
+	0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x65, 0x70, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x21, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x43, 0x72,
+	0x65, 0x61, 0x74, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x53, 0x74, 0x65, 0x70, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x55, 0x0a, 0x10, 0x43, 0x72, 0x65, 0x61, 0x74,
+	0x65, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x1f, 0x2e, 0x75, 0x70,
+	0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e, 0x64, 0x69,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x75,
+	0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e, 0x64,
+	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x64,
+	0x0a, 0x15, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x6e,
+	0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x24, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64,
+	0x2e, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x65, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x52, 0x65, 0x6e, 0x64,
+	0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e,
+	0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x65, 0x6e, 0x64, 0x69,
+	0x6e, 0x67, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5e, 0x0a, 0x13, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x61, 0x64,
+	0x79, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x22, 0x2e, 0x75, 0x70,
+	0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x61, 0x64, 0x79, 0x52, 0x65,
+	0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x23, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x65, 0x61,
+	0x64, 0x79, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x52, 0x0a, 0x0f, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65,
+	0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1e, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64,
+	0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64,
+	0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x52, 0x65, 0x6e, 0x64, 0x69, 0x74, 0x69, 0x6f, 0x6e,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5e, 0x0a, 0x13, 0x55, 0x70, 0x64, 0x61,
+	0x74, 0x65, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x50, 0x6c, 0x61, 0x79, 0x62, 0x61, 0x63, 0x6b, 0x12,
+	0x22, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56,
+	0x69, 0x64, 0x65, 0x6f, 0x50, 0x6c, 0x61, 0x79, 0x62, 0x61, 0x63, 0x6b, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x23, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x55, 0x70, 0x64,
+	0x61, 0x74, 0x65, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x50, 0x6c, 0x61, 0x79, 0x62, 0x61, 0x63, 0x6b,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5b, 0x0a, 0x12, 0x45, 0x78, 0x70, 0x69,
+	0x72, 0x65, 0x53, 0x74, 0x61, 0x6c, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x73, 0x12, 0x21,
+	0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x45, 0x78, 0x70, 0x69, 0x72, 0x65, 0x53, 0x74,
+	0x61, 0x6c, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x22, 0x2e, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2e, 0x45, 0x78, 0x70, 0x69, 0x72,
+	0x65, 0x53, 0x74, 0x61, 0x6c, 0x65, 0x55, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x32, 0x5a, 0x30, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
+	0x63, 0x6f, 0x6d, 0x2f, 0x4c, 0x67, 0x41, 0x63, 0x65, 0x72, 0x62, 0x69, 0x2f, 0x67, 0x6f, 0x2d,
+	0x76, 0x69, 0x64, 0x65, 0x6f, 0x2d, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x2f, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x2f, 0x75, 0x70, 0x6c, 0x6f, 0x61, 0x64, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -1374,57 +1651,67 @@ func file_upload_proto_rawDescGZIP() []byte {
 	return file_upload_proto_rawDescData
 }
 
-var file_upload_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_upload_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_upload_proto_goTypes = []interface{}{
-	(*GetUploadProcessingContextRequest)(nil),  // 0: upload.GetUploadProcessingContextRequest
-	(*GetUploadProcessingContextResponse)(nil), // 1: upload.GetUploadProcessingContextResponse
-	(*UpdateUploadStatusRequest)(nil),          // 2: upload.UpdateUploadStatusRequest
-	(*UpdateUploadStatusResponse)(nil),         // 3: upload.UpdateUploadStatusResponse
-	(*UpdateUploadStepRequest)(nil),            // 4: upload.UpdateUploadStepRequest
-	(*UpdateUploadStepResponse)(nil),           // 5: upload.UpdateUploadStepResponse
-	(*UpdateVideoMetadataRequest)(nil),         // 6: upload.UpdateVideoMetadataRequest
-	(*UpdateVideoMetadataResponse)(nil),        // 7: upload.UpdateVideoMetadataResponse
-	(*UpdateVideoThumbnailRequest)(nil),        // 8: upload.UpdateVideoThumbnailRequest
-	(*UpdateVideoThumbnailResponse)(nil),       // 9: upload.UpdateVideoThumbnailResponse
-	(*CreateUploadStepsRequest)(nil),           // 10: upload.CreateUploadStepsRequest
-	(*CreateUploadStepsResponse)(nil),          // 11: upload.CreateUploadStepsResponse
-	(*CreateRenditionsRequest)(nil),            // 12: upload.CreateRenditionsRequest
-	(*CreateRenditionsResponse)(nil),           // 13: upload.CreateRenditionsResponse
-	(*ListPendingRenditionsRequest)(nil),       // 14: upload.ListPendingRenditionsRequest
-	(*PendingRendition)(nil),                   // 15: upload.PendingRendition
-	(*ListPendingRenditionsResponse)(nil),      // 16: upload.ListPendingRenditionsResponse
-	(*UpdateRenditionRequest)(nil),             // 17: upload.UpdateRenditionRequest
-	(*UpdateRenditionResponse)(nil),            // 18: upload.UpdateRenditionResponse
-	(*ExpireStaleUploadsRequest)(nil),          // 19: upload.ExpireStaleUploadsRequest
-	(*ExpireStaleUploadsResponse)(nil),         // 20: upload.ExpireStaleUploadsResponse
+	(*UpdateVideoPlaybackRequest)(nil),         // 0: upload.UpdateVideoPlaybackRequest
+	(*UpdateVideoPlaybackResponse)(nil),        // 1: upload.UpdateVideoPlaybackResponse
+	(*GetUploadProcessingContextRequest)(nil),  // 2: upload.GetUploadProcessingContextRequest
+	(*GetUploadProcessingContextResponse)(nil), // 3: upload.GetUploadProcessingContextResponse
+	(*UpdateUploadStatusRequest)(nil),          // 4: upload.UpdateUploadStatusRequest
+	(*UpdateUploadStatusResponse)(nil),         // 5: upload.UpdateUploadStatusResponse
+	(*UpdateUploadStepRequest)(nil),            // 6: upload.UpdateUploadStepRequest
+	(*UpdateUploadStepResponse)(nil),           // 7: upload.UpdateUploadStepResponse
+	(*UpdateVideoMetadataRequest)(nil),         // 8: upload.UpdateVideoMetadataRequest
+	(*UpdateVideoMetadataResponse)(nil),        // 9: upload.UpdateVideoMetadataResponse
+	(*UpdateVideoThumbnailRequest)(nil),        // 10: upload.UpdateVideoThumbnailRequest
+	(*UpdateVideoThumbnailResponse)(nil),       // 11: upload.UpdateVideoThumbnailResponse
+	(*CreateUploadStepsRequest)(nil),           // 12: upload.CreateUploadStepsRequest
+	(*CreateUploadStepsResponse)(nil),          // 13: upload.CreateUploadStepsResponse
+	(*CreateRenditionsRequest)(nil),            // 14: upload.CreateRenditionsRequest
+	(*CreateRenditionsResponse)(nil),           // 15: upload.CreateRenditionsResponse
+	(*ListPendingRenditionsRequest)(nil),       // 16: upload.ListPendingRenditionsRequest
+	(*PendingRendition)(nil),                   // 17: upload.PendingRendition
+	(*ListPendingRenditionsResponse)(nil),      // 18: upload.ListPendingRenditionsResponse
+	(*ListReadyRenditionsRequest)(nil),         // 19: upload.ListReadyRenditionsRequest
+	(*ReadyRendition)(nil),                     // 20: upload.ReadyRendition
+	(*ListReadyRenditionsResponse)(nil),        // 21: upload.ListReadyRenditionsResponse
+	(*UpdateRenditionRequest)(nil),             // 22: upload.UpdateRenditionRequest
+	(*UpdateRenditionResponse)(nil),            // 23: upload.UpdateRenditionResponse
+	(*ExpireStaleUploadsRequest)(nil),          // 24: upload.ExpireStaleUploadsRequest
+	(*ExpireStaleUploadsResponse)(nil),         // 25: upload.ExpireStaleUploadsResponse
 }
 var file_upload_proto_depIdxs = []int32{
-	15, // 0: upload.ListPendingRenditionsResponse.renditions:type_name -> upload.PendingRendition
-	0,  // 1: upload.UploadStateService.GetUploadProcessingContext:input_type -> upload.GetUploadProcessingContextRequest
-	2,  // 2: upload.UploadStateService.UpdateUploadStatus:input_type -> upload.UpdateUploadStatusRequest
-	4,  // 3: upload.UploadStateService.UpdateUploadStep:input_type -> upload.UpdateUploadStepRequest
-	6,  // 4: upload.UploadStateService.UpdateVideoMetadata:input_type -> upload.UpdateVideoMetadataRequest
-	8,  // 5: upload.UploadStateService.UpdateVideoThumbnail:input_type -> upload.UpdateVideoThumbnailRequest
-	10, // 6: upload.UploadStateService.CreateUploadSteps:input_type -> upload.CreateUploadStepsRequest
-	12, // 7: upload.UploadStateService.CreateRenditions:input_type -> upload.CreateRenditionsRequest
-	14, // 8: upload.UploadStateService.ListPendingRenditions:input_type -> upload.ListPendingRenditionsRequest
-	17, // 9: upload.UploadStateService.UpdateRendition:input_type -> upload.UpdateRenditionRequest
-	19, // 10: upload.UploadStateService.ExpireStaleUploads:input_type -> upload.ExpireStaleUploadsRequest
-	1,  // 11: upload.UploadStateService.GetUploadProcessingContext:output_type -> upload.GetUploadProcessingContextResponse
-	3,  // 12: upload.UploadStateService.UpdateUploadStatus:output_type -> upload.UpdateUploadStatusResponse
-	5,  // 13: upload.UploadStateService.UpdateUploadStep:output_type -> upload.UpdateUploadStepResponse
-	7,  // 14: upload.UploadStateService.UpdateVideoMetadata:output_type -> upload.UpdateVideoMetadataResponse
-	9,  // 15: upload.UploadStateService.UpdateVideoThumbnail:output_type -> upload.UpdateVideoThumbnailResponse
-	11, // 16: upload.UploadStateService.CreateUploadSteps:output_type -> upload.CreateUploadStepsResponse
-	13, // 17: upload.UploadStateService.CreateRenditions:output_type -> upload.CreateRenditionsResponse
-	16, // 18: upload.UploadStateService.ListPendingRenditions:output_type -> upload.ListPendingRenditionsResponse
-	18, // 19: upload.UploadStateService.UpdateRendition:output_type -> upload.UpdateRenditionResponse
-	20, // 20: upload.UploadStateService.ExpireStaleUploads:output_type -> upload.ExpireStaleUploadsResponse
-	11, // [11:21] is the sub-list for method output_type
-	1,  // [1:11] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	17, // 0: upload.ListPendingRenditionsResponse.renditions:type_name -> upload.PendingRendition
+	20, // 1: upload.ListReadyRenditionsResponse.renditions:type_name -> upload.ReadyRendition
+	2,  // 2: upload.UploadStateService.GetUploadProcessingContext:input_type -> upload.GetUploadProcessingContextRequest
+	4,  // 3: upload.UploadStateService.UpdateUploadStatus:input_type -> upload.UpdateUploadStatusRequest
+	6,  // 4: upload.UploadStateService.UpdateUploadStep:input_type -> upload.UpdateUploadStepRequest
+	8,  // 5: upload.UploadStateService.UpdateVideoMetadata:input_type -> upload.UpdateVideoMetadataRequest
+	10, // 6: upload.UploadStateService.UpdateVideoThumbnail:input_type -> upload.UpdateVideoThumbnailRequest
+	12, // 7: upload.UploadStateService.CreateUploadSteps:input_type -> upload.CreateUploadStepsRequest
+	14, // 8: upload.UploadStateService.CreateRenditions:input_type -> upload.CreateRenditionsRequest
+	16, // 9: upload.UploadStateService.ListPendingRenditions:input_type -> upload.ListPendingRenditionsRequest
+	19, // 10: upload.UploadStateService.ListReadyRenditions:input_type -> upload.ListReadyRenditionsRequest
+	22, // 11: upload.UploadStateService.UpdateRendition:input_type -> upload.UpdateRenditionRequest
+	0,  // 12: upload.UploadStateService.UpdateVideoPlayback:input_type -> upload.UpdateVideoPlaybackRequest
+	24, // 13: upload.UploadStateService.ExpireStaleUploads:input_type -> upload.ExpireStaleUploadsRequest
+	3,  // 14: upload.UploadStateService.GetUploadProcessingContext:output_type -> upload.GetUploadProcessingContextResponse
+	5,  // 15: upload.UploadStateService.UpdateUploadStatus:output_type -> upload.UpdateUploadStatusResponse
+	7,  // 16: upload.UploadStateService.UpdateUploadStep:output_type -> upload.UpdateUploadStepResponse
+	9,  // 17: upload.UploadStateService.UpdateVideoMetadata:output_type -> upload.UpdateVideoMetadataResponse
+	11, // 18: upload.UploadStateService.UpdateVideoThumbnail:output_type -> upload.UpdateVideoThumbnailResponse
+	13, // 19: upload.UploadStateService.CreateUploadSteps:output_type -> upload.CreateUploadStepsResponse
+	15, // 20: upload.UploadStateService.CreateRenditions:output_type -> upload.CreateRenditionsResponse
+	18, // 21: upload.UploadStateService.ListPendingRenditions:output_type -> upload.ListPendingRenditionsResponse
+	21, // 22: upload.UploadStateService.ListReadyRenditions:output_type -> upload.ListReadyRenditionsResponse
+	23, // 23: upload.UploadStateService.UpdateRendition:output_type -> upload.UpdateRenditionResponse
+	1,  // 24: upload.UploadStateService.UpdateVideoPlayback:output_type -> upload.UpdateVideoPlaybackResponse
+	25, // 25: upload.UploadStateService.ExpireStaleUploads:output_type -> upload.ExpireStaleUploadsResponse
+	14, // [14:26] is the sub-list for method output_type
+	2,  // [2:14] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_upload_proto_init() }
@@ -1434,7 +1721,7 @@ func file_upload_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_upload_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetUploadProcessingContextRequest); i {
+			switch v := v.(*UpdateVideoPlaybackRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1446,7 +1733,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetUploadProcessingContextResponse); i {
+			switch v := v.(*UpdateVideoPlaybackResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1458,7 +1745,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateUploadStatusRequest); i {
+			switch v := v.(*GetUploadProcessingContextRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1470,7 +1757,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateUploadStatusResponse); i {
+			switch v := v.(*GetUploadProcessingContextResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1482,7 +1769,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateUploadStepRequest); i {
+			switch v := v.(*UpdateUploadStatusRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1494,7 +1781,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateUploadStepResponse); i {
+			switch v := v.(*UpdateUploadStatusResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1506,7 +1793,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateVideoMetadataRequest); i {
+			switch v := v.(*UpdateUploadStepRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1518,7 +1805,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateVideoMetadataResponse); i {
+			switch v := v.(*UpdateUploadStepResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1530,7 +1817,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateVideoThumbnailRequest); i {
+			switch v := v.(*UpdateVideoMetadataRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1542,7 +1829,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateVideoThumbnailResponse); i {
+			switch v := v.(*UpdateVideoMetadataResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1554,7 +1841,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateUploadStepsRequest); i {
+			switch v := v.(*UpdateVideoThumbnailRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1566,7 +1853,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateUploadStepsResponse); i {
+			switch v := v.(*UpdateVideoThumbnailResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1578,7 +1865,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateRenditionsRequest); i {
+			switch v := v.(*CreateUploadStepsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1590,7 +1877,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateRenditionsResponse); i {
+			switch v := v.(*CreateUploadStepsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1602,7 +1889,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListPendingRenditionsRequest); i {
+			switch v := v.(*CreateRenditionsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1614,7 +1901,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PendingRendition); i {
+			switch v := v.(*CreateRenditionsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1626,7 +1913,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListPendingRenditionsResponse); i {
+			switch v := v.(*ListPendingRenditionsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1638,7 +1925,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateRenditionRequest); i {
+			switch v := v.(*PendingRendition); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1650,7 +1937,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateRenditionResponse); i {
+			switch v := v.(*ListPendingRenditionsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1662,7 +1949,7 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ExpireStaleUploadsRequest); i {
+			switch v := v.(*ListReadyRenditionsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1674,6 +1961,66 @@ func file_upload_proto_init() {
 			}
 		}
 		file_upload_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ReadyRendition); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_upload_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListReadyRenditionsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_upload_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UpdateRenditionRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_upload_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UpdateRenditionResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_upload_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ExpireStaleUploadsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_upload_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ExpireStaleUploadsResponse); i {
 			case 0:
 				return &v.state
@@ -1692,7 +2039,7 @@ func file_upload_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_upload_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
