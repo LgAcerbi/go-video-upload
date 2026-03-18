@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS videos (
     user_id         UUID NOT NULL,
     title           VARCHAR(512) NOT NULL DEFAULT '',
     format          VARCHAR(64),
+    thumbnail_path  VARCHAR(1024),
     status          VARCHAR(32) NOT NULL DEFAULT 'processing',
     duration_sec    NUMERIC(12, 2),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -72,5 +73,6 @@ CREATE INDEX IF NOT EXISTS idx_video_renditions_status ON video_renditions (vide
 
 -- Migrations for existing DBs (safe to run multiple times).
 ALTER TABLE videos DROP COLUMN IF EXISTS width, DROP COLUMN IF EXISTS height;
+ALTER TABLE videos ADD COLUMN IF NOT EXISTS thumbnail_path VARCHAR(1024);
 ALTER TABLE video_renditions ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'pending';
 ALTER TABLE video_renditions ALTER COLUMN storage_path DROP NOT NULL;
