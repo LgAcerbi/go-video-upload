@@ -6,6 +6,6 @@ RUN go mod download
 RUN CGO_ENABLED=0 go build -o /transcode ./cmd/server
 
 FROM alpine:latest
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg curl netcat-openbsd
 COPY --from=builder /transcode /transcode
 ENTRYPOINT ["/transcode"]

@@ -6,5 +6,6 @@ RUN go mod download
 RUN CGO_ENABLED=0 go build -o /orchestrator ./cmd/server
 
 FROM alpine:latest
+RUN apk add --no-cache curl netcat-openbsd
 COPY --from=builder /orchestrator /orchestrator
 ENTRYPOINT ["/orchestrator"]
