@@ -23,10 +23,12 @@ const (
 	UploadStateService_UpdateUploadStatus_FullMethodName         = "/upload.UploadStateService/UpdateUploadStatus"
 	UploadStateService_UpdateUploadStep_FullMethodName           = "/upload.UploadStateService/UpdateUploadStep"
 	UploadStateService_UpdateVideoMetadata_FullMethodName        = "/upload.UploadStateService/UpdateVideoMetadata"
+	UploadStateService_UpdateVideoThumbnail_FullMethodName       = "/upload.UploadStateService/UpdateVideoThumbnail"
 	UploadStateService_CreateUploadSteps_FullMethodName          = "/upload.UploadStateService/CreateUploadSteps"
 	UploadStateService_CreateRenditions_FullMethodName           = "/upload.UploadStateService/CreateRenditions"
 	UploadStateService_ListPendingRenditions_FullMethodName      = "/upload.UploadStateService/ListPendingRenditions"
 	UploadStateService_UpdateRendition_FullMethodName            = "/upload.UploadStateService/UpdateRendition"
+	UploadStateService_ExpireStaleUploads_FullMethodName         = "/upload.UploadStateService/ExpireStaleUploads"
 )
 
 // UploadStateServiceClient is the client API for UploadStateService service.
@@ -37,10 +39,12 @@ type UploadStateServiceClient interface {
 	UpdateUploadStatus(ctx context.Context, in *UpdateUploadStatusRequest, opts ...grpc.CallOption) (*UpdateUploadStatusResponse, error)
 	UpdateUploadStep(ctx context.Context, in *UpdateUploadStepRequest, opts ...grpc.CallOption) (*UpdateUploadStepResponse, error)
 	UpdateVideoMetadata(ctx context.Context, in *UpdateVideoMetadataRequest, opts ...grpc.CallOption) (*UpdateVideoMetadataResponse, error)
+	UpdateVideoThumbnail(ctx context.Context, in *UpdateVideoThumbnailRequest, opts ...grpc.CallOption) (*UpdateVideoThumbnailResponse, error)
 	CreateUploadSteps(ctx context.Context, in *CreateUploadStepsRequest, opts ...grpc.CallOption) (*CreateUploadStepsResponse, error)
 	CreateRenditions(ctx context.Context, in *CreateRenditionsRequest, opts ...grpc.CallOption) (*CreateRenditionsResponse, error)
 	ListPendingRenditions(ctx context.Context, in *ListPendingRenditionsRequest, opts ...grpc.CallOption) (*ListPendingRenditionsResponse, error)
 	UpdateRendition(ctx context.Context, in *UpdateRenditionRequest, opts ...grpc.CallOption) (*UpdateRenditionResponse, error)
+	ExpireStaleUploads(ctx context.Context, in *ExpireStaleUploadsRequest, opts ...grpc.CallOption) (*ExpireStaleUploadsResponse, error)
 }
 
 type uploadStateServiceClient struct {
@@ -87,6 +91,15 @@ func (c *uploadStateServiceClient) UpdateVideoMetadata(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *uploadStateServiceClient) UpdateVideoThumbnail(ctx context.Context, in *UpdateVideoThumbnailRequest, opts ...grpc.CallOption) (*UpdateVideoThumbnailResponse, error) {
+	out := new(UpdateVideoThumbnailResponse)
+	err := c.cc.Invoke(ctx, UploadStateService_UpdateVideoThumbnail_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *uploadStateServiceClient) CreateUploadSteps(ctx context.Context, in *CreateUploadStepsRequest, opts ...grpc.CallOption) (*CreateUploadStepsResponse, error) {
 	out := new(CreateUploadStepsResponse)
 	err := c.cc.Invoke(ctx, UploadStateService_CreateUploadSteps_FullMethodName, in, out, opts...)
@@ -123,6 +136,15 @@ func (c *uploadStateServiceClient) UpdateRendition(ctx context.Context, in *Upda
 	return out, nil
 }
 
+func (c *uploadStateServiceClient) ExpireStaleUploads(ctx context.Context, in *ExpireStaleUploadsRequest, opts ...grpc.CallOption) (*ExpireStaleUploadsResponse, error) {
+	out := new(ExpireStaleUploadsResponse)
+	err := c.cc.Invoke(ctx, UploadStateService_ExpireStaleUploads_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UploadStateServiceServer is the server API for UploadStateService service.
 // All implementations must embed UnimplementedUploadStateServiceServer
 // for forward compatibility
@@ -131,10 +153,12 @@ type UploadStateServiceServer interface {
 	UpdateUploadStatus(context.Context, *UpdateUploadStatusRequest) (*UpdateUploadStatusResponse, error)
 	UpdateUploadStep(context.Context, *UpdateUploadStepRequest) (*UpdateUploadStepResponse, error)
 	UpdateVideoMetadata(context.Context, *UpdateVideoMetadataRequest) (*UpdateVideoMetadataResponse, error)
+	UpdateVideoThumbnail(context.Context, *UpdateVideoThumbnailRequest) (*UpdateVideoThumbnailResponse, error)
 	CreateUploadSteps(context.Context, *CreateUploadStepsRequest) (*CreateUploadStepsResponse, error)
 	CreateRenditions(context.Context, *CreateRenditionsRequest) (*CreateRenditionsResponse, error)
 	ListPendingRenditions(context.Context, *ListPendingRenditionsRequest) (*ListPendingRenditionsResponse, error)
 	UpdateRendition(context.Context, *UpdateRenditionRequest) (*UpdateRenditionResponse, error)
+	ExpireStaleUploads(context.Context, *ExpireStaleUploadsRequest) (*ExpireStaleUploadsResponse, error)
 	mustEmbedUnimplementedUploadStateServiceServer()
 }
 
@@ -154,6 +178,9 @@ func (UnimplementedUploadStateServiceServer) UpdateUploadStep(context.Context, *
 func (UnimplementedUploadStateServiceServer) UpdateVideoMetadata(context.Context, *UpdateVideoMetadataRequest) (*UpdateVideoMetadataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateVideoMetadata not implemented")
 }
+func (UnimplementedUploadStateServiceServer) UpdateVideoThumbnail(context.Context, *UpdateVideoThumbnailRequest) (*UpdateVideoThumbnailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateVideoThumbnail not implemented")
+}
 func (UnimplementedUploadStateServiceServer) CreateUploadSteps(context.Context, *CreateUploadStepsRequest) (*CreateUploadStepsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateUploadSteps not implemented")
 }
@@ -165,6 +192,9 @@ func (UnimplementedUploadStateServiceServer) ListPendingRenditions(context.Conte
 }
 func (UnimplementedUploadStateServiceServer) UpdateRendition(context.Context, *UpdateRenditionRequest) (*UpdateRenditionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateRendition not implemented")
+}
+func (UnimplementedUploadStateServiceServer) ExpireStaleUploads(context.Context, *ExpireStaleUploadsRequest) (*ExpireStaleUploadsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExpireStaleUploads not implemented")
 }
 func (UnimplementedUploadStateServiceServer) mustEmbedUnimplementedUploadStateServiceServer() {}
 
@@ -251,6 +281,24 @@ func _UploadStateService_UpdateVideoMetadata_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UploadStateService_UpdateVideoThumbnail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateVideoThumbnailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadStateServiceServer).UpdateVideoThumbnail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UploadStateService_UpdateVideoThumbnail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadStateServiceServer).UpdateVideoThumbnail(ctx, req.(*UpdateVideoThumbnailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UploadStateService_CreateUploadSteps_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateUploadStepsRequest)
 	if err := dec(in); err != nil {
@@ -323,6 +371,24 @@ func _UploadStateService_UpdateRendition_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UploadStateService_ExpireStaleUploads_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExpireStaleUploadsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UploadStateServiceServer).ExpireStaleUploads(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UploadStateService_ExpireStaleUploads_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UploadStateServiceServer).ExpireStaleUploads(ctx, req.(*ExpireStaleUploadsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UploadStateService_ServiceDesc is the grpc.ServiceDesc for UploadStateService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -347,6 +413,10 @@ var UploadStateService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _UploadStateService_UpdateVideoMetadata_Handler,
 		},
 		{
+			MethodName: "UpdateVideoThumbnail",
+			Handler:    _UploadStateService_UpdateVideoThumbnail_Handler,
+		},
+		{
 			MethodName: "CreateUploadSteps",
 			Handler:    _UploadStateService_CreateUploadSteps_Handler,
 		},
@@ -361,6 +431,10 @@ var UploadStateService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateRendition",
 			Handler:    _UploadStateService_UpdateRendition_Handler,
+		},
+		{
+			MethodName: "ExpireStaleUploads",
+			Handler:    _UploadStateService_ExpireStaleUploads_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

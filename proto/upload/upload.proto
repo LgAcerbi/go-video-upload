@@ -11,10 +11,12 @@ service UploadStateService {
   rpc UpdateUploadStatus(UpdateUploadStatusRequest) returns (UpdateUploadStatusResponse);
   rpc UpdateUploadStep(UpdateUploadStepRequest) returns (UpdateUploadStepResponse);
   rpc UpdateVideoMetadata(UpdateVideoMetadataRequest) returns (UpdateVideoMetadataResponse);
+  rpc UpdateVideoThumbnail(UpdateVideoThumbnailRequest) returns (UpdateVideoThumbnailResponse);
   rpc CreateUploadSteps(CreateUploadStepsRequest) returns (CreateUploadStepsResponse);
   rpc CreateRenditions(CreateRenditionsRequest) returns (CreateRenditionsResponse);
   rpc ListPendingRenditions(ListPendingRenditionsRequest) returns (ListPendingRenditionsResponse);
   rpc UpdateRendition(UpdateRenditionRequest) returns (UpdateRenditionResponse);
+  rpc ExpireStaleUploads(ExpireStaleUploadsRequest) returns (ExpireStaleUploadsResponse);
 }
 
 message GetUploadProcessingContextRequest {
@@ -57,6 +59,13 @@ message UpdateVideoMetadataRequest {
 
 message UpdateVideoMetadataResponse {}
 
+message UpdateVideoThumbnailRequest {
+  string video_id = 1;
+  string thumbnail_storage_path = 2;
+}
+
+message UpdateVideoThumbnailResponse {}
+
 message CreateUploadStepsRequest {
   string upload_id = 1;
   repeated string steps = 2;  // e.g. ["metadata", "transcode", "thumbnail", "moderation"]
@@ -98,3 +107,13 @@ message UpdateRenditionRequest {
 }
 
 message UpdateRenditionResponse {}
+
+message ExpireStaleUploadsRequest {
+  int32 limit = 1; // max uploads to expire in this run (0 = server default)
+}
+
+message ExpireStaleUploadsResponse {
+  int32 found = 1;
+  int32 expired = 2;
+  int32 skipped = 3;
+}
