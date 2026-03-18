@@ -13,4 +13,6 @@ type UploadRepository interface {
 	Update(ctx context.Context, u *entities.Upload) error
 	UpdateStatus(ctx context.Context, uploadID, status string) error
 	ListAll(ctx context.Context, limit int) ([]*entities.Upload, error)
+	ListExpiredPending(ctx context.Context, limit int) ([]*entities.Upload, error)
+	ExpireUploadAndSoftDeleteVideo(ctx context.Context, uploadID, videoID string) (bool, error)
 }

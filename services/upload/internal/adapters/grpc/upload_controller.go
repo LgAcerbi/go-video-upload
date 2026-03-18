@@ -73,6 +73,16 @@ func (c *UploadStateController) UpdateVideoMetadata(ctx context.Context, req *up
 	return &upload.UpdateVideoMetadataResponse{}, nil
 }
 
+func (c *UploadStateController) UpdateVideoThumbnail(ctx context.Context, req *upload.UpdateVideoThumbnailRequest) (*upload.UpdateVideoThumbnailResponse, error) {
+	if req == nil || req.VideoId == "" || req.ThumbnailStoragePath == "" {
+		return &upload.UpdateVideoThumbnailResponse{}, nil
+	}
+	if err := c.svc.UpdateVideoThumbnail(ctx, req.VideoId, req.ThumbnailStoragePath); err != nil {
+		return nil, err
+	}
+	return &upload.UpdateVideoThumbnailResponse{}, nil
+}
+
 func (c *UploadStateController) CreateUploadSteps(ctx context.Context, req *upload.CreateUploadStepsRequest) (*upload.CreateUploadStepsResponse, error) {
 	if req == nil || req.UploadId == "" || len(req.Steps) == 0 {
 		return &upload.CreateUploadStepsResponse{}, nil
@@ -130,4 +140,20 @@ func (c *UploadStateController) UpdateRendition(ctx context.Context, req *upload
 		return nil, err
 	}
 	return &upload.UpdateRenditionResponse{}, nil
+}
+
+func (c *UploadStateController) ExpireStaleUploads(ctx context.Context, req *upload.ExpireStaleUploadsRequest) (*upload.ExpireStaleUploadsResponse, error) {
+	limit := 0
+	if req != nil && req.Limit > 0 {
+		limit = int(req.Limit)
+	}
+	res, err := c.svc.ExpireStaleUploads(ctx, limit)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "expire stale uploads: %v", err)
+	}
+	return &upload.ExpireStaleUploadsResponse{
+		Found:   int32(res.Found),
+		Expired: int32(res.Expired),
+		Skipped: int32(res.Skipped),
+	}, nil
 }

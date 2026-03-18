@@ -11,6 +11,7 @@ type Video struct {
 	UserID      string
 	Title       string
 	Format      string
+	ThumbnailPath string
 	Status      string
 	DurationSec *float64
 	CreatedAt   time.Time

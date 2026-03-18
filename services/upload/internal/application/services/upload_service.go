@@ -175,6 +175,19 @@ func (s *UploadService) UpdateVideoMetadata(ctx context.Context, videoID, format
 	return s.videoRepo.Update(ctx, v)
 }
 
+func (s *UploadService) UpdateVideoThumbnail(ctx context.Context, videoID, thumbnailStoragePath string) error {
+	if videoID == "" || thumbnailStoragePath == "" {
+		return nil
+	}
+	v, err := s.videoRepo.GetByID(ctx, videoID)
+	if err != nil {
+		return err
+	}
+	v.ThumbnailPath = thumbnailStoragePath
+	v.UpdatedAt = time.Now()
+	return s.videoRepo.Update(ctx, v)
+}
+
 func (s *UploadService) CreateUploadSteps(ctx context.Context, uploadID string, steps []string) error {
 	if uploadID == "" || len(steps) == 0 {
 		return nil
@@ -188,6 +201,33 @@ func (s *UploadService) ListUploads(ctx context.Context, limit int) ([]*entities
 
 func (s *UploadService) ListVideos(ctx context.Context, limit int) ([]*entities.Video, error) {
 	return s.videoRepo.ListAll(ctx, limit)
+}
+
+type ExpireStaleUploadsResult struct {
+	Found   int
+	Expired int
+	Skipped int
+}
+
+func (s *UploadService) ExpireStaleUploads(ctx context.Context, limit int) (ExpireStaleUploadsResult, error) {
+	candidates, err := s.uploadRepo.ListExpiredPending(ctx, limit)
+	if err != nil {
+		return ExpireStaleUploadsResult{}, err
+	}
+
+	res := ExpireStaleUploadsResult{Found: len(candidates)}
+	for _, u := range candidates {
+		ok, err := s.uploadRepo.ExpireUploadAndSoftDeleteVideo(ctx, u.ID, u.VideoID)
+		if err != nil {
+			return res, err
+		}
+		if ok {
+			res.Expired++
+		} else {
+			res.Skipped++
+		}
+	}
+	return res, nil
 }
 
 func (s *UploadService) CreateRenditions(ctx context.Context, videoID, originalStoragePath string, originalWidth, originalHeight int32, targetHeights []int32) error {
