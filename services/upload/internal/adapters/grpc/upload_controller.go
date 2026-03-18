@@ -137,6 +137,25 @@ func (c *UploadStateController) ListPendingRenditions(ctx context.Context, req *
 	return &upload.ListPendingRenditionsResponse{Renditions: out}, nil
 }
 
+func (c *UploadStateController) ListReadyRenditions(ctx context.Context, req *upload.ListReadyRenditionsRequest) (*upload.ListReadyRenditionsResponse, error) {
+	if req == nil || req.VideoId == "" {
+		return nil, status.Error(codes.InvalidArgument, "video_id is required")
+	}
+	renditions, err := c.svc.ListReadyRenditions(ctx, req.VideoId)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*upload.ReadyRendition, len(renditions))
+	for i, r := range renditions {
+		path := ""
+		if r.StoragePath != nil {
+			path = *r.StoragePath
+		}
+		out[i] = &upload.ReadyRendition{Resolution: r.Resolution, StoragePath: path}
+	}
+	return &upload.ListReadyRenditionsResponse{Renditions: out}, nil
+}
+
 func (c *UploadStateController) UpdateRendition(ctx context.Context, req *upload.UpdateRenditionRequest) (*upload.UpdateRenditionResponse, error) {
 	if req == nil || req.VideoId == "" {
 		return nil, status.Error(codes.InvalidArgument, "video_id is required")
@@ -161,6 +180,19 @@ func (c *UploadStateController) UpdateRendition(ctx context.Context, req *upload
 		return nil, err
 	}
 	return &upload.UpdateRenditionResponse{}, nil
+}
+
+func (c *UploadStateController) UpdateVideoPlayback(ctx context.Context, req *upload.UpdateVideoPlaybackRequest) (*upload.UpdateVideoPlaybackResponse, error) {
+	if req == nil || req.VideoId == "" {
+		return nil, status.Error(codes.InvalidArgument, "video_id is required")
+	}
+	if req.HlsMasterPath == "" {
+		return nil, status.Error(codes.InvalidArgument, "hls_master_path is required")
+	}
+	if err := c.svc.UpdateVideoPlayback(ctx, req.VideoId, req.HlsMasterPath); err != nil {
+		return nil, err
+	}
+	return &upload.UpdateVideoPlaybackResponse{}, nil
 }
 
 func (c *UploadStateController) ExpireStaleUploads(ctx context.Context, req *upload.ExpireStaleUploadsRequest) (*upload.ExpireStaleUploadsResponse, error) {

@@ -98,6 +98,30 @@ func (r *RenditionRepository) ListPendingByVideoID(ctx context.Context, videoID 
 	return out, rows.Err()
 }
 
+func (r *RenditionRepository) ListReadyByVideoID(ctx context.Context, videoID string) ([]*entities.Rendition, error) {
+	query := `
+		SELECT id, video_id, resolution, storage_path, COALESCE(format, ''), width, height, bitrate_kbps, status, created_at
+		FROM video_renditions
+		WHERE video_id = $1 AND status = $2 AND storage_path IS NOT NULL
+		ORDER BY height DESC`
+	rows, err := r.pool.Query(ctx, query, videoID, entities.RenditionStatusReady)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*entities.Rendition
+	for rows.Next() {
+		var rend entities.Rendition
+		var storagePath *string
+		if err := rows.Scan(&rend.ID, &rend.VideoID, &rend.Resolution, &storagePath, &rend.Format, &rend.Width, &rend.Height, &rend.BitrateKbps, &rend.Status, &rend.CreatedAt); err != nil {
+			return nil, err
+		}
+		rend.StoragePath = storagePath
+		out = append(out, &rend)
+	}
+	return out, rows.Err()
+}
+
 func (r *RenditionRepository) Update(ctx context.Context, rend *entities.Rendition) error {
 	query := `
 		UPDATE video_renditions

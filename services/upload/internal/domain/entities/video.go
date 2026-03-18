@@ -7,22 +7,24 @@ import (
 )
 
 type Video struct {
-	ID          string
-	UserID      string
-	Title       string
-	Format      string
-	ThumbnailPath string
-	Status      string
-	DurationSec *float64
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   *time.Time
+	ID             string
+	UserID         string
+	Title          string
+	Format         string
+	ThumbnailPath  string
+	Status         string
+	DurationSec    *float64
+	HlsMasterPath  string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	DeletedAt      *time.Time
 }
 
 const (
 	VideoStatusProcessing = "processing"
-	VideoStatusReady      = "ready"
-	VideoStatusFailed     = "failed"
+	VideoStatusReady     = "ready"
+	VideoStatusFailed    = "failed"
+	VideoStatusPublished = "published"
 )
 
 func NewVideo(userID, title string) *Video {

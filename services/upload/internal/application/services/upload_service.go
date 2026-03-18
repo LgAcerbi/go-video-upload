@@ -214,6 +214,30 @@ func (s *UploadService) UpdateVideoThumbnail(ctx context.Context, videoID, thumb
 	return s.videoRepo.Update(ctx, v)
 }
 
+func (s *UploadService) UpdateVideoPlayback(ctx context.Context, videoID, hlsMasterPath string) error {
+	if videoID == "" {
+		return fmt.Errorf("video_id is required")
+	}
+	if hlsMasterPath == "" {
+		return fmt.Errorf("hls_master_path is required")
+	}
+	v, err := s.videoRepo.GetByID(ctx, videoID)
+	if err != nil {
+		return err
+	}
+	v.HlsMasterPath = hlsMasterPath
+	v.Status = entities.VideoStatusPublished
+	v.UpdatedAt = time.Now()
+	return s.videoRepo.Update(ctx, v)
+}
+
+func (s *UploadService) GetVideoByID(ctx context.Context, videoID string) (*entities.Video, error) {
+	if videoID == "" {
+		return nil, fmt.Errorf("video_id is required")
+	}
+	return s.videoRepo.GetByID(ctx, videoID)
+}
+
 func (s *UploadService) CreateUploadSteps(ctx context.Context, uploadID string, steps []string) error {
 	if uploadID == "" {
 		return fmt.Errorf("upload_id is required")
@@ -275,6 +299,13 @@ func (s *UploadService) ListPendingRenditions(ctx context.Context, videoID strin
 		return nil, fmt.Errorf("video_id is required")
 	}
 	return s.renditionRepo.ListPendingByVideoID(ctx, videoID)
+}
+
+func (s *UploadService) ListReadyRenditions(ctx context.Context, videoID string) ([]*entities.Rendition, error) {
+	if videoID == "" {
+		return nil, fmt.Errorf("video_id is required")
+	}
+	return s.renditionRepo.ListReadyByVideoID(ctx, videoID)
 }
 
 func (s *UploadService) UpdateRendition(ctx context.Context, videoID, resolution, storagePath string, width, height, bitrateKbps *int32, format string) error {

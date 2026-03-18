@@ -123,7 +123,8 @@ func main() {
 	}
 
 	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo, uploadStepRepo, renditionRepo, uploadProcessPub)
-	uploadController := controller.NewUploadController(uploadSvc, log)
+	playbackBaseURL := envOrDefault("PLAYBACK_BASE_URL", os.Getenv("S3_PRESIGN_ENDPOINT"))
+	uploadController := controller.NewUploadController(uploadSvc, log, playbackBaseURL)
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcserver.MetricsUnaryInterceptor(metricsWriter, "upload")))
 	upload.RegisterUploadStateServiceServer(grpcServer, grpcserver.NewUploadStateController(uploadSvc))
