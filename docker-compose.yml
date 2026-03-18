@@ -322,6 +322,76 @@ services:
         echo "Ready. Starting transcode...";
         exec /transcode
 
+  segment:
+    build:
+      context: .
+      dockerfile: services/segment/Dockerfile
+    environment:
+      UPLOAD_GRPC_TARGET: upload:9090
+      S3_ENDPOINT: http://localstack:4566
+      S3_REGION: us-east-1
+      S3_BUCKET: videos
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin
+    depends_on:
+      upload:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      localstack-init:
+        condition: service_completed_successfully
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        echo "Waiting for infra + upload gRPC...";
+        until nc -z rabbitmq 5672; do echo "rabbitmq not ready"; sleep 2; done;
+        until curl -sf http://localstack:4566/_localstack/health >/dev/null; do echo "localstack not ready"; sleep 2; done;
+        until nc -z upload 9090; do echo "upload gRPC not ready"; sleep 2; done;
+        echo "Ready. Starting segment...";
+        exec /segment
+
+  publish:
+    build:
+      context: .
+      dockerfile: services/publish/Dockerfile
+    environment:
+      UPLOAD_GRPC_TARGET: upload:9090
+      S3_ENDPOINT: http://localstack:4566
+      S3_REGION: us-east-1
+      S3_BUCKET: videos
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin
+    depends_on:
+      upload:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      localstack-init:
+        condition: service_completed_successfully
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        echo "Waiting for infra + upload gRPC...";
+        until nc -z rabbitmq 5672; do echo "rabbitmq not ready"; sleep 2; done;
+        until curl -sf http://localstack:4566/_localstack/health >/dev/null; do echo "localstack not ready"; sleep 2; done;
+        until nc -z upload 9090; do echo "upload gRPC not ready"; sleep 2; done;
+        echo "Ready. Starting publish...";
+        exec /publish
+
   thumbnail:
     build:
       context: .
