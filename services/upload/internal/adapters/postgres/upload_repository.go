@@ -75,7 +75,7 @@ func (r *UploadRepository) ListAll(ctx context.Context, limit int) ([]*entities.
 		SELECT id, video_id, COALESCE(storage_path, ''), status, created_at, updated_at, deleted_at, expires_at
 		FROM uploads WHERE deleted_at IS NULL
 		ORDER BY created_at DESC
-		LIMIT $1`
+		LIMIT $1::integer`
 	rows, err := r.pool.Query(ctx, query, limit)
 	if err != nil {
 		return nil, err

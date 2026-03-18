@@ -53,7 +53,7 @@ func (r *VideoRepository) ListAll(ctx context.Context, limit int) ([]*entities.V
 		SELECT id, user_id, title, COALESCE(format, ''), status, duration_sec, created_at, updated_at
 		FROM videos WHERE deleted_at IS NULL
 		ORDER BY created_at DESC
-		LIMIT $1`
+		LIMIT $1::integer`
 	rows, err := r.pool.Query(ctx, query, limit)
 	if err != nil {
 		return nil, err
