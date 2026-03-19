@@ -81,6 +81,23 @@ func (f metadataExtractorFake) Extract(context.Context, string) (string, float64
 	return "mp4", 12.5, 1920, 1080, nil
 }
 
+const metadataQueueName = "metadata-extract_metadata"
+
+func waitForConsumerReady(t *testing.T, ch *amqp.Channel, timeout time.Duration) {
+	t.Helper()
+	// Give consumer time to connect and declare topology (RabbitMQ can take ~10s to be ready)
+	time.Sleep(5 * time.Second)
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		_, err := ch.QueueInspect(metadataQueueName)
+		if err == nil {
+			return
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	t.Fatal("consumer did not declare queue in time")
+}
+
 func TestExtractMetadataConsumer_HappyPath_Integration(t *testing.T) {
 	h := testintegration.StartRabbitHarness(t)
 	defer h.Close(t)
@@ -101,6 +118,7 @@ func TestExtractMetadataConsumer_HappyPath_Integration(t *testing.T) {
 		t.Fatalf("open channel: %v", err)
 	}
 	defer ch.Close()
+	waitForConsumerReady(t, ch, 15*time.Second)
 	body, _ := json.Marshal(map[string]string{"upload_id": "upload-happy"})
 	if err := pkgrabbitmq.Publish(context.Background(), ch, "pipeline-steps", "extract_metadata", body); err != nil {
 		t.Fatalf("publish: %v", err)
@@ -132,6 +150,7 @@ func TestExtractMetadataConsumer_InvalidMessageToDLQ_Integration(t *testing.T) {
 		t.Fatalf("open channel: %v", err)
 	}
 	defer ch.Close()
+	waitForConsumerReady(t, ch, 15*time.Second)
 	if err := pkgrabbitmq.Publish(context.Background(), ch, "pipeline-steps", "extract_metadata", []byte("{invalid")); err != nil {
 		t.Fatalf("publish invalid payload: %v", err)
 	}
@@ -161,6 +180,7 @@ func TestExtractMetadataConsumer_RetryExhaustedReportsFailed_Integration(t *test
 		t.Fatalf("open channel: %v", err)
 	}
 	defer ch.Close()
+	waitForConsumerReady(t, ch, 15*time.Second)
 
 	body, _ := json.Marshal(map[string]string{"upload_id": "upload-fail"})
 	err = ch.PublishWithContext(context.Background(), "", "metadata-extract_metadata", false, false, amqp.Publishing{
