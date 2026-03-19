@@ -27,3 +27,4 @@ jobs:
           go test -tags=integration ./services/thumbnail/test/integration -v
           go test -tags=integration ./services/publish/test/integration -v
           go test -tags=integration ./services/expirer/cmd/server -v
+          go test -tags=integration ./services/outbox-dispatcher/cmd/server -v
