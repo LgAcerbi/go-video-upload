@@ -57,7 +57,12 @@ message UpdateUploadStepRequest {
   string error_message = 4;  // optional, for failures
 }
 
-message UpdateUploadStepResponse {}
+message UpdateUploadStepResponse {
+  bool applied = 1;
+  string from_status = 2;
+  string to_status = 3;
+  string failure_reason = 4;
+}
 
 message UpdateVideoMetadataRequest {
   string video_id = 1;
