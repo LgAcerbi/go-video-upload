@@ -20,6 +20,7 @@ type segmentMessage struct {
 }
 
 func RunSegmentConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.SegmentService, log logger.Logger) error {
+	retryCfg := rabbitmq.DefaultRetryConfig()
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -30,6 +31,9 @@ func RunSegmentConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *ser
 		return err
 	}
 	if err := rabbitmq.DeclareQueue(ch, segmentQueueName, true); err != nil {
+		return err
+	}
+	if err := rabbitmq.DeclareRetryInfrastructure(ch, segmentQueueName, retryCfg); err != nil {
 		return err
 	}
 	if err := rabbitmq.QueueBind(ch, segmentQueueName, segmentKey, pipelineStepsExchange); err != nil {
@@ -52,12 +56,15 @@ func RunSegmentConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *ser
 			var msg segmentMessage
 			if err := json.Unmarshal(d.Body, &msg); err != nil {
 				log.Error("invalid segment message", "error", err, "body", string(d.Body))
-				_ = d.Nack(false, false)
+				rabbitmq.SendToDLQ(ctx, ch, d, segmentQueueName, err, log)
 				continue
 			}
 			if err := svc.Segment(ctx, msg.UploadID); err != nil {
 				log.Error("segment failed", "upload_id", msg.UploadID, "error", err)
-				_ = d.Nack(false, false)
+				exhausted := rabbitmq.HandleRetry(ctx, ch, d, segmentQueueName, err, retryCfg, log)
+				if exhausted {
+					svc.ReportFailed(ctx, msg.UploadID, err)
+				}
 				continue
 			}
 			_ = d.Ack(false)

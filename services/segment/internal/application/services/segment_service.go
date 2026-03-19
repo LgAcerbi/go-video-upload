@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/models"
 	"github.com/LgAcerbi/go-video-upload/services/segment/internal/application/ports"
@@ -37,20 +36,17 @@ func NewSegmentService(
 func (s *SegmentService) Segment(ctx context.Context, uploadID string) error {
 	ctxData, err := s.uploadClient.GetUploadProcessingContext(ctx, uploadID)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	videoID := ctxData.VideoID
 
 	ready, err := s.uploadClient.ListReadyRenditions(ctx, videoID)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	if len(ready) == 0 {
 		stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepSegment, "done", "")
 		if err != nil {
-			s.reportFailed(ctx, uploadID, err)
 			return err
 		}
 		if !stepRes.Applied {
@@ -65,13 +61,11 @@ func (s *SegmentService) Segment(ctx context.Context, uploadID string) error {
 		}
 		path, cleanup, err := s.fetcher.FetchToTempFile(ctx, s.bucket, rend.StoragePath)
 		if err != nil {
-			s.reportFailed(ctx, uploadID, fmt.Errorf("fetch %s: %w", rend.Resolution, err))
 			return err
 		}
 		outputPrefix := "videos/" + videoID + "/hls/" + rend.Resolution
 		if err := s.producer.ProduceAndUpload(ctx, s.bucket, outputPrefix, path); err != nil {
 			cleanup()
-			s.reportFailed(ctx, uploadID, fmt.Errorf("hls %s: %w", rend.Resolution, err))
 			return err
 		}
 		cleanup()
@@ -79,7 +73,6 @@ func (s *SegmentService) Segment(ctx context.Context, uploadID string) error {
 
 	stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepSegment, "done", "")
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	if !stepRes.Applied {
@@ -88,7 +81,7 @@ func (s *SegmentService) Segment(ctx context.Context, uploadID string) error {
 	return s.stepPub.PublishStepResult(ctx, uploadID, stepSegment, "done", "")
 }
 
-func (s *SegmentService) reportFailed(ctx context.Context, uploadID string, err error) {
+func (s *SegmentService) ReportFailed(ctx context.Context, uploadID string, err error) {
 	errMsg := err.Error()
 	stepRes, updateErr := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepSegment, models.UploadStatusFailed, errMsg)
 	if updateErr != nil || !stepRes.Applied {
