@@ -14,8 +14,15 @@ type UploadProcessingContext struct {
 	StoragePath string
 }
 
+type StepTransitionResult struct {
+	Applied       bool
+	FromStatus    string
+	ToStatus      string
+	FailureReason string
+}
+
 type UploadStateClient interface {
 	GetUploadProcessingContext(ctx context.Context, uploadID string) (*UploadProcessingContext, error)
-	UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) error
+	UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) (StepTransitionResult, error)
 	ListReadyRenditions(ctx context.Context, videoID string) ([]ReadyRendition, error)
 }

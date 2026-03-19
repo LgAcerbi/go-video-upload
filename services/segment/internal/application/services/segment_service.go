@@ -48,9 +48,13 @@ func (s *SegmentService) Segment(ctx context.Context, uploadID string) error {
 		return err
 	}
 	if len(ready) == 0 {
-		if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepSegment, "done", ""); err != nil {
+		stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepSegment, "done", "")
+		if err != nil {
 			s.reportFailed(ctx, uploadID, err)
 			return err
+		}
+		if !stepRes.Applied {
+			return nil
 		}
 		return s.stepPub.PublishStepResult(ctx, uploadID, stepSegment, "done", "")
 	}
@@ -73,15 +77,22 @@ func (s *SegmentService) Segment(ctx context.Context, uploadID string) error {
 		cleanup()
 	}
 
-	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepSegment, "done", ""); err != nil {
+	stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepSegment, "done", "")
+	if err != nil {
 		s.reportFailed(ctx, uploadID, err)
 		return err
+	}
+	if !stepRes.Applied {
+		return nil
 	}
 	return s.stepPub.PublishStepResult(ctx, uploadID, stepSegment, "done", "")
 }
 
 func (s *SegmentService) reportFailed(ctx context.Context, uploadID string, err error) {
 	errMsg := err.Error()
-	_ = s.uploadClient.UpdateUploadStep(ctx, uploadID, stepSegment, models.UploadStatusFailed, errMsg)
+	stepRes, updateErr := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepSegment, models.UploadStatusFailed, errMsg)
+	if updateErr != nil || !stepRes.Applied {
+		return
+	}
 	_ = s.stepPub.PublishStepResult(ctx, uploadID, stepSegment, models.UploadStatusFailed, errMsg)
 }
