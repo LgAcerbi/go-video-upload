@@ -13,6 +13,23 @@ This repo is a **study case in Go** for building a small **video upload → proc
 - **Hexagonal & Clean Architecture patterns** — application ports with Postgres, AMQP, and object-storage adapters
 - **Direct-to-object-storage uploads** — presigned URLs to S3-compatible storage so bytes bypass the API
 
+## Architecture
+
+High-level flow: HTTP upload finalization persists state and an **outbox** row in one transaction; **outbox-dispatcher** publishes to RabbitMQ; the **orchestrator** drives steps; **workers** read/write objects and call **upload gRPC** to update Postgres.
+
+![System design: upload, outbox, orchestrator, workers, and three RabbitMQ queues](docs/system_design.png)
+
+### System features
+
+- **Asynchronous pipeline** — Heavy work runs off the HTTP path via RabbitMQ: one queue feeds the orchestrator from the outbox, another dispatches per-step jobs to workers, and a third carries completions back so the orchestrator can advance the workflow.
+- **Transactional outbox** — Domain writes and `outbox_events` rows commit together in Postgres; **outbox-dispatcher** relays events to the broker so you don’t lose “something happened” signals if the broker was down at commit time.
+- **Centralized orchestration** — The orchestrator owns step order and progression; workers stay focused on single concerns (metadata, thumbnail, transcode, segment, publish).
+- **Microservices layout** — Bounded services can be developed and scaled independently while sharing Postgres as the source of truth and gRPC contracts under `proto/`.
+- **Multi-protocol access** — **HTTP** for client-facing upload (e.g. presign/finalize), **RabbitMQ** for event-driven processing, **gRPC** for efficient upload service calls (state updates, coordination) from orchestrator and workers.
+- **Lifecycle hygiene** — An **expirer** service works against Postgres to clean up or time-limit upload-related data so storage and rows don’t grow without bound.
+
+Source diagram file: [`docs/system_design.png`](docs/system_design.png).
+
 ## Quick start (run entire project)
 
 ### Prerequisites
