@@ -84,16 +84,23 @@ func (s *PublishService) Publish(ctx context.Context, uploadID string) error {
 		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
-	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepPublish, "done", ""); err != nil {
+	stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepPublish, "done", "")
+	if err != nil {
 		s.reportFailed(ctx, uploadID, err)
 		return err
+	}
+	if !stepRes.Applied {
+		return nil
 	}
 	return s.stepPub.PublishStepResult(ctx, uploadID, stepPublish, "done", "")
 }
 
 func (s *PublishService) reportFailed(ctx context.Context, uploadID string, err error) {
 	errMsg := err.Error()
-	_ = s.uploadClient.UpdateUploadStep(ctx, uploadID, stepPublish, models.UploadStatusFailed, errMsg)
+	stepRes, updateErr := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepPublish, models.UploadStatusFailed, errMsg)
 	_ = s.uploadClient.UpdateUploadStatus(ctx, uploadID, models.UploadStatusFailed)
+	if updateErr != nil || !stepRes.Applied {
+		return
+	}
 	_ = s.stepPub.PublishStepResult(ctx, uploadID, stepPublish, models.UploadStatusFailed, errMsg)
 }
