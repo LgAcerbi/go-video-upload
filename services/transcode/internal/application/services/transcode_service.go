@@ -56,9 +56,13 @@ func (s *TranscodeService) Transcode(ctx context.Context, uploadID string) error
 		return err
 	}
 	if len(pending) == 0 {
-		if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, "done", ""); err != nil {
+		stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, "done", "")
+		if err != nil {
 			s.reportFailed(ctx, uploadID, err)
 			return err
+		}
+		if !stepRes.Applied {
+			return nil
 		}
 		return s.stepPub.PublishStepResult(ctx, uploadID, stepTranscode, "done", "")
 	}
@@ -110,9 +114,13 @@ func (s *TranscodeService) Transcode(ctx context.Context, uploadID string) error
 		}
 	}
 
-	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, "done", ""); err != nil {
+	stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, "done", "")
+	if err != nil {
 		s.reportFailed(ctx, uploadID, err)
 		return err
+	}
+	if !stepRes.Applied {
+		return nil
 	}
 	if err := s.stepPub.PublishStepResult(ctx, uploadID, stepTranscode, "done", ""); err != nil {
 		s.reportFailed(ctx, uploadID, err)
@@ -123,6 +131,9 @@ func (s *TranscodeService) Transcode(ctx context.Context, uploadID string) error
 
 func (s *TranscodeService) reportFailed(ctx context.Context, uploadID string, err error) {
 	errMsg := err.Error()
-	_ = s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, models.UploadStatusFailed, errMsg)
+	stepRes, updateErr := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepTranscode, models.UploadStatusFailed, errMsg)
+	if updateErr != nil || !stepRes.Applied {
+		return
+	}
 	_ = s.stepPub.PublishStepResult(ctx, uploadID, stepTranscode, models.UploadStatusFailed, errMsg)
 }
