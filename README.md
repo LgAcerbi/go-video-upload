@@ -1,4 +1,4 @@
-# pGo Video Upload Monorepo
+# Go Video Upload Monorepo
 
 This repo is a **study case in Go** for building a small **video upload → process → publish** system. It stitches together several **microservices architecture** ideas so you can see them work end to end in one codebase—not production polish, but a hands-on map of common patterns.
 
