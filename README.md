@@ -1,48 +1,17 @@
 # Go Video Upload Monorepo
 
-This repo is a **study case in Go** for building a small **video upload → process → publish** system. It stitches together several **microservices architecture** ideas so you can see them work end to end in one codebase—not production polish, but a hands-on map of common patterns.
+Study-oriented **Go** monorepo for **video upload → process → publish**: microservices, transactional outbox, RabbitMQ, Postgres, and gRPC—not production-hardening, but an end-to-end map of common patterns.
 
-**Approaches and patterns included here:**
+## Prerequisites
 
-- **Microservices / bounded contexts** — upload API, orchestrator, workers (metadata, thumbnail, transcode, segment, publish), and outbox dispatcher as separate services
-- **gRPC + Protocol Buffers** — contracts under `proto/`, including the upload state API consumed by workers
-- **REST HTTP** — client-facing upload API (e.g. presign and finalize)
-- **Transactional outbox** — `outbox_events` written in the same transaction as domain changes, then relayed to the broker by `outbox-dispatcher`
-- **Message-driven pipeline** — RabbitMQ queues/exchanges for `upload-process`, per-step work, and step completion feedback
-- **Orchestration** — orchestrator service owns pipeline steps and progression across workers
-- **Hexagonal & Clean Architecture patterns** — application ports with Postgres, AMQP, and object-storage adapters
-- **Direct-to-object-storage uploads** — presigned URLs to S3-compatible storage so bytes bypass the API
+- **Docker Desktop** (Compose v2) — run the full stack with `docker compose`
+- **Go 1.24+** — workspace tests, lint, `go run` per service, proto generation
 
-## Architecture
-
-High-level flow: HTTP upload finalization persists state and an **outbox** row in one transaction; **outbox-dispatcher** publishes to RabbitMQ; the **orchestrator** drives steps; **workers** read/write objects and call **upload gRPC** to update Postgres.
-
-![System design: upload, outbox, orchestrator, workers, and three RabbitMQ queues](docs/system_design.png)
-
-### System features
-
-- **Asynchronous pipeline** — Heavy work runs off the HTTP path via RabbitMQ: one queue feeds the orchestrator from the outbox, another dispatches per-step jobs to workers, and a third carries completions back so the orchestrator can advance the workflow.
-- **Transactional outbox** — Domain writes and `outbox_events` rows commit together in Postgres; **outbox-dispatcher** relays events to the broker so you don’t lose “something happened” signals if the broker was down at commit time.
-- **Centralized orchestration** — The orchestrator owns step order and progression; workers stay focused on single concerns (metadata, thumbnail, transcode, segment, publish).
-- **Microservices layout** — Bounded services can be developed and scaled independently while sharing Postgres as the source of truth and gRPC contracts under `proto/`.
-- **Multi-protocol access** — **HTTP** for client-facing upload (e.g. presign/finalize), **RabbitMQ** for event-driven processing, **gRPC** for efficient upload service calls (state updates, coordination) from orchestrator and workers.
-- **Lifecycle hygiene** — An **expirer** service works against Postgres to clean up or time-limit upload-related data so storage and rows don’t grow without bound.
-
-Source diagram file: [`docs/system_design.png`](docs/system_design.png).
-
-## Quick start (run entire project)
-
-### Prerequisites
-
-- Docker Desktop (Docker Compose v2)
+## Quick start
 
 ### Non-production defaults
 
-This repository ships with development-friendly defaults in `docker-compose.yml` (for example admin credentials and dev tokens). Before using it on shared machines, VPNs, or any public network:
-
-- copy `.env.example` to `.env` and set strong secrets
-- do not expose infrastructure ports unless you need host access
-- rotate credentials/tokens from local defaults
+Compose uses dev-friendly secrets and ports in `docker-compose.yml`. On shared machines or any untrusted network: copy `.env.example` to `.env`, set strong values, avoid exposing ports you don’t need, and rotate default credentials.
 
 ### Start
 
@@ -51,24 +20,21 @@ This repository ships with development-friendly defaults in `docker-compose.yml`
 docker compose up -d --build
 ```
 
-Optional setup for custom secrets:
+Optional secrets file:
 
 ```bash
 cp .env.example .env
 ```
 
-Optional hardened local profile (example):
+Optional internal-infra profile (after creating `docker-compose.override.yml` from `docker-compose.override.example.yml`):
 
 ```bash
-# after creating docker-compose.override.yml from docker-compose.override.example.yml
 docker compose --profile internal-infra up -d --build
 ```
 
 ### Database schema / migrations
 
-DB migrations run automatically on every `docker compose up` (via the `db-migrate` one-shot service).
-
-If you want to run migrations manually (for debugging), you can also use:
+Migrations run on `docker compose up` via the `db-migrate` one-shot service. Manual run:
 
 ```bash
 docker compose --profile tools run --rm db-schema
@@ -80,7 +46,7 @@ docker compose --profile tools run --rm db-schema
 docker compose down
 ```
 
-To also delete data volumes (Postgres/Influx/Grafana):
+Remove data volumes (Postgres / Influx / Grafana):
 
 ```bash
 docker compose down -v
@@ -88,44 +54,77 @@ docker compose down -v
 
 ### Useful URLs (host)
 
-- Upload API: `http://localhost:8080`
-- Upload gRPC: `localhost:9090`
-- E2E client UI: `http://localhost:3000`
-- Adminer (Postgres UI): `http://localhost:8081`
-- Grafana: `http://localhost:3001`
-- InfluxDB: `http://localhost:8086`
-- LocalStack (S3): `http://localhost:4566`
-- RabbitMQ UI: `http://localhost:15672` (user/pass: `admin` / `admin`)
+| Service        | URL |
+|----------------|-----|
+| Upload API     | `http://localhost:8080` |
+| Upload gRPC    | `localhost:9090` |
+| E2E client UI  | `http://localhost:3000` |
+| Adminer        | `http://localhost:8081` |
+| Grafana        | `http://localhost:3001` |
+| InfluxDB       | `http://localhost:8086` |
+| LocalStack (S3)| `http://localhost:4566` |
+| RabbitMQ UI    | `http://localhost:15672` (`admin` / `admin`) |
 
-### E2E client API key note
+### E2E client API key
 
-The e2e frontend now sends `X-Api-Key` using `VITE_UPLOAD_API_KEY`. In Compose, both upload `SECRET_TOKEN` and e2e `VITE_UPLOAD_API_KEY` are sourced from `API_SHARED_TOKEN` so they stay aligned. This is intended for local e2e/dev only; embedding API keys in SPA assets is not a production authentication model.
+The e2e app sends `X-Api-Key` via `VITE_UPLOAD_API_KEY`. In Compose, upload `SECRET_TOKEN` and `VITE_UPLOAD_API_KEY` come from `API_SHARED_TOKEN` so they stay aligned. That is for **local dev only**; shipping API keys in frontend assets is not a production auth model.
 
-## Structure
+## Architecture
 
-- **services/upload** — REST API for uploads
-- **services/metadata** — gRPC service for metadata extraction
-- **services/transcode** — service for transcoding
-- **pkg/** — Shared libraries (config, logger, middleware, models)
-- **proto/** — Protobuf definitions for gRPC contracts
+Upload finalize commits domain state and **`outbox_events`** in one transaction; **outbox-dispatcher** publishes to RabbitMQ; the **orchestrator** advances the pipeline; **workers** use object storage and **upload gRPC** to persist progress in Postgres.
 
-## Prerequisites
+![System design: upload, outbox, orchestrator, workers, and three RabbitMQ queues](docs/system_design.png)
 
-- Go 1.24+
+Diagram source: [`docs/system_design.png`](docs/system_design.png).
+
+### Capabilities
+
+- **Async pipeline** — Three logical queues: outbox → orchestrator, orchestrator → step workers, workers → orchestrator for completions.
+- **Transactional outbox** — No lost “something happened” signals when the broker is down at commit time; dispatcher relays after the fact.
+- **Orchestrated steps** — Metadata, thumbnail, transcode, segment, publish as separate workers; orchestrator owns order and progression.
+- **Shared data model** — Postgres (`videos`, `uploads`, `upload_steps`, `outbox_events`, etc.) as the source of truth across services.
+- **Multi-protocol** — HTTP for client upload (e.g. presign/finalize), AMQP for work, gRPC (`proto/`) for upload service calls from orchestrator and workers.
+- **Lifecycle** — **expirer** service cleans up time-limited or stale upload-related data.
+
+### Patterns in the codebase
+
+- Bounded-context microservices (upload, orchestrator, workers, outbox-dispatcher, expirer)
+- Hexagonal-style ports with Postgres, RabbitMQ, and object-storage adapters
+- Presigned PUT to S3-compatible storage so bytes bypass the API
+
+## Repository layout
+
+| Path | Role |
+|------|------|
+| `services/upload` | REST upload API |
+| `services/orchestrator` | Pipeline coordination |
+| `services/outbox-dispatcher` | Outbox → broker |
+| `services/expirer` | Upload/data expiry |
+| `services/metadata`, `thumbnail`, `transcode`, `segment`, `publish` | Pipeline workers |
+| `pkg/` | Shared libs (config, logger, middleware, models, RabbitMQ helpers, …) |
+| `proto/` | gRPC / protobuf contracts |
+| `db/` | SQL schema / migration inputs |
+| `docs/` | Design assets (e.g. system diagram) |
+
+## Development
+
+From repo root, `go.work` ties workspace modules together. Run a service from its directory, for example:
+
+```bash
+cd services/upload && go run ./cmd/server
+```
+
+…or rely on Docker Compose for the full graph.
 
 ## Commands
 
 ```bash
-# Run tests
+# Tests (from repo root)
 go test ./...
 
 # Lint
 golangci-lint run ./...
 
-# Generate Go code from protos
+# Generate Go from protos
 ./scripts/proto-gen.sh
 ```
-
-## Development
-
-From repo root, `go.work` enables local development: services and `pkg` are used as workspace modules. You can run each service from its directory with `go run ./cmd/server` or use Docker Compose as described above.
