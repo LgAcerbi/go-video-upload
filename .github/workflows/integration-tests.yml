@@ -1,0 +1,29 @@
+name: Integration Tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.work
+
+      - name: Run integration test suites
+        run: |
+          go test -tags=integration ./services/metadata/test/integration -v
+          go test -tags=integration ./services/orchestrator/test/integration -v
+          go test -tags=integration ./services/transcode/test/integration -v
+          go test -tags=integration ./services/segment/test/integration -v
+          go test -tags=integration ./services/thumbnail/test/integration -v
+          go test -tags=integration ./services/publish/test/integration -v
+          go test -tags=integration ./services/expirer/cmd/server -v
