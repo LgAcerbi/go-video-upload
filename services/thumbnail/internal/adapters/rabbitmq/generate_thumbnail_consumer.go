@@ -22,6 +22,7 @@ type generateThumbnailMessage struct {
 }
 
 func RunGenerateThumbnailConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.ThumbnailService, mw *metrics.Writer, log logger.Logger) error {
+	retryCfg := rabbitmq.DefaultRetryConfig()
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -32,6 +33,9 @@ func RunGenerateThumbnailConsumer(ctx context.Context, conn *rabbitmq.Connection
 		return err
 	}
 	if err := rabbitmq.DeclareQueue(ch, generateThumbnailQueueName, true); err != nil {
+		return err
+	}
+	if err := rabbitmq.DeclareRetryInfrastructure(ch, generateThumbnailQueueName, retryCfg); err != nil {
 		return err
 	}
 	if err := rabbitmq.QueueBind(ch, generateThumbnailQueueName, generateThumbnailKey, pipelineStepsExchange); err != nil {
@@ -57,7 +61,7 @@ func RunGenerateThumbnailConsumer(ctx context.Context, conn *rabbitmq.Connection
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagGenerateThumbnail, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
 				}
-				_ = d.Nack(false, false)
+				rabbitmq.SendToDLQ(ctx, ch, d, generateThumbnailQueueName, err, log)
 				continue
 			}
 			if err := svc.GenerateThumbnail(ctx, msg.UploadID); err != nil {
@@ -65,7 +69,10 @@ func RunGenerateThumbnailConsumer(ctx context.Context, conn *rabbitmq.Connection
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagGenerateThumbnail, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
 				}
-				_ = d.Nack(false, false)
+				exhausted := rabbitmq.HandleRetry(ctx, ch, d, generateThumbnailQueueName, err, retryCfg, log)
+				if exhausted {
+					svc.ReportFailed(ctx, msg.UploadID, err)
+				}
 				continue
 			}
 			_ = d.Ack(false)
@@ -75,4 +82,3 @@ func RunGenerateThumbnailConsumer(ctx context.Context, conn *rabbitmq.Connection
 		}
 	}
 }
-

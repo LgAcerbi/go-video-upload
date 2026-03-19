@@ -41,7 +41,6 @@ func NewThumbnailService(
 func (s *ThumbnailService) GenerateThumbnail(ctx context.Context, uploadID string) error {
 	ctxData, err := s.uploadClient.GetUploadProcessingContext(ctx, uploadID)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	videoID := ctxData.VideoID
@@ -49,14 +48,12 @@ func (s *ThumbnailService) GenerateThumbnail(ctx context.Context, uploadID strin
 
 	inputPath, cleanupIn, err := s.fetcher.FetchToTempFile(ctx, s.bucket, storagePath)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	defer cleanupIn()
 
 	outPath, cleanupOut, err := s.generator.Generate(ctx, inputPath)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	defer cleanupOut()
@@ -64,41 +61,35 @@ func (s *ThumbnailService) GenerateThumbnail(ctx context.Context, uploadID strin
 	key := fmt.Sprintf("videos/%s/thumbnail.jpg", videoID)
 	fi, err := os.Stat(outPath)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	f, err := os.Open(outPath)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	if err := s.uploader.UploadThumbnail(ctx, s.bucket, key, f, fi.Size()); err != nil {
 		f.Close()
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	f.Close()
 
 	if err := s.uploadClient.UpdateVideoThumbnail(ctx, videoID, key); err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepGenerateThumbnail, "done", "")
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	if !stepRes.Applied {
 		return nil
 	}
 	if err := s.stepPub.PublishStepResult(ctx, uploadID, stepGenerateThumbnail, "done", ""); err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	return nil
 }
 
-func (s *ThumbnailService) reportFailed(ctx context.Context, uploadID string, err error) {
+func (s *ThumbnailService) ReportFailed(ctx context.Context, uploadID string, err error) {
 	errMsg := err.Error()
 	stepRes, updateErr := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepGenerateThumbnail, models.UploadStatusFailed, errMsg)
 	if updateErr != nil || !stepRes.Applied {
@@ -106,4 +97,3 @@ func (s *ThumbnailService) reportFailed(ctx context.Context, uploadID string, er
 	}
 	_ = s.stepPub.PublishStepResult(ctx, uploadID, stepGenerateThumbnail, models.UploadStatusFailed, errMsg)
 }
-
