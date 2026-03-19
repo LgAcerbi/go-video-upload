@@ -8,9 +8,16 @@ type UploadProcessingContext struct {
 	StoragePath string
 }
 
+type StepTransitionResult struct {
+	Applied       bool
+	FromStatus    string
+	ToStatus      string
+	FailureReason string
+}
+
 type UploadStateClient interface {
 	GetUploadProcessingContext(ctx context.Context, uploadID string) (*UploadProcessingContext, error)
-	UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) error
+	UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) (StepTransitionResult, error)
 	UpdateVideoMetadata(ctx context.Context, videoID, format string, durationSec float64, status string) error
 	CreateRenditions(ctx context.Context, videoID, originalStoragePath string, originalWidth, originalHeight int32, targetHeights []int32) error
 }

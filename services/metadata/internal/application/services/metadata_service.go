@@ -64,9 +64,13 @@ func (s *MetadataService) ExtractMetadata(ctx context.Context, uploadID string) 
 		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
-	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepExtractMetadata, "done", ""); err != nil {
+	stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepExtractMetadata, "done", "")
+	if err != nil {
 		s.reportFailed(ctx, uploadID, err)
 		return err
+	}
+	if !stepRes.Applied {
+		return nil
 	}
 	return s.stepResultPub.PublishStepResult(ctx, uploadID, stepExtractMetadata, "done", "")
 }
@@ -85,6 +89,9 @@ func computeLadder(sourceHeight int) []int32 {
 
 func (s *MetadataService) reportFailed(ctx context.Context, uploadID string, err error) {
 	errMsg := err.Error()
-	_ = s.uploadClient.UpdateUploadStep(ctx, uploadID, stepExtractMetadata, models.UploadStatusFailed, errMsg)
+	stepRes, updateErr := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepExtractMetadata, models.UploadStatusFailed, errMsg)
+	if updateErr != nil || !stepRes.Applied {
+		return
+	}
 	_ = s.stepResultPub.PublishStepResult(ctx, uploadID, stepExtractMetadata, models.UploadStatusFailed, errMsg)
 }
