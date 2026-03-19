@@ -148,10 +148,6 @@ services:
       S3_BUCKET: videos
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: "5672"
-      RABBITMQ_USER: admin
-      RABBITMQ_PASS: admin
       DATABASE_URL: postgresql://admin:admin@postgres:5432/admin
       INFLUXDB_URL: http://influxdb:8086
       INFLUXDB_TOKEN: acerbi-dev-influxdb-token
@@ -161,8 +157,6 @@ services:
       db-migrate:
         condition: service_completed_successfully
       postgres:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
       localstack:
         condition: service_healthy
@@ -174,9 +168,8 @@ services:
       - /bin/sh
       - -ec
       - |
-        echo "Waiting for infra (postgres/rabbitmq/localstack/influxdb)...";
+        echo "Waiting for infra (postgres/localstack/influxdb)...";
         until nc -z postgres 5432; do echo "postgres not ready"; sleep 2; done;
-        until nc -z rabbitmq 5672; do echo "rabbitmq not ready"; sleep 2; done;
         until curl -sf http://localstack:4566/_localstack/health >/dev/null; do echo "localstack not ready"; sleep 2; done;
         until curl -sf http://influxdb:8086/health >/dev/null; do echo "influxdb not ready"; sleep 2; done;
         echo "Infra ready. Starting upload...";
@@ -289,6 +282,36 @@ services:
         until nc -z upload 9090; do echo "upload gRPC not ready"; sleep 2; done;
         echo "Ready. Starting expirer...";
         exec /expirer
+
+  outbox-dispatcher:
+    build:
+      context: .
+      dockerfile: services/outbox-dispatcher/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://admin:admin@postgres:5432/admin
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin
+      OUTBOX_DISPATCHER_BATCH_LIMIT: "100"
+      OUTBOX_DISPATCHER_RUN_TIMEOUT_SEC: "20"
+      OUTBOX_DISPATCHER_TICK_INTERVAL_MS: "5000"
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        echo "Waiting for postgres + rabbitmq...";
+        until nc -z postgres 5432; do echo "postgres not ready"; sleep 2; done;
+        until nc -z rabbitmq 5672; do echo "rabbitmq not ready"; sleep 2; done;
+        echo "Ready. Starting outbox-dispatcher...";
+        exec /outbox-dispatcher
 
   transcode:
     build:
