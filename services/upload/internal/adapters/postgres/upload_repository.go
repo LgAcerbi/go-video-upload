@@ -62,6 +62,32 @@ func (r *UploadRepository) Update(ctx context.Context, u *entities.Upload) error
 	return err
 }
 
+func (r *UploadRepository) FinalizeProcessingWithOutbox(ctx context.Context, u *entities.Upload, eventType, idempotencyKey string, payload []byte) error {
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	const updateUpload = `
+		UPDATE uploads
+		SET storage_path = $2, status = $3, updated_at = $4
+		WHERE id = $1`
+	if _, err := tx.Exec(ctx, updateUpload, u.ID, util.NullIfEmpty(u.StoragePath), u.Status, u.UpdatedAt); err != nil {
+		return err
+	}
+
+	const insertOutbox = `
+		INSERT INTO outbox_events (event_type, idempotency_key, payload, status, attempts, next_attempt_at, created_at)
+		VALUES ($1, $2, $3::jsonb, 'pending', 0, NOW(), NOW())
+		ON CONFLICT (event_type, idempotency_key) DO NOTHING`
+	if _, err := tx.Exec(ctx, insertOutbox, eventType, idempotencyKey, string(payload)); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (r *UploadRepository) UpdateStatus(ctx context.Context, uploadID, status string) error {
 	query := `UPDATE uploads SET status = $2, updated_at = NOW() WHERE id = $1`
 	_, err := r.pool.Exec(ctx, query, uploadID, status)

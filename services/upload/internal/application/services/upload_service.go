@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -39,24 +40,22 @@ const PresignExpiry = time.Hour
 const originalObjectKeyPrefix = "videos/%s/original"
 
 type UploadService struct {
-	storage          ports.FileStorageRepository
-	bucket           string
-	videoRepo        ports.VideoRepository
-	uploadRepo       ports.UploadRepository
-	uploadStepRepo   ports.UploadStepRepository
-	renditionRepo    ports.RenditionRepository
-	uploadProcessPub ports.UploadProcessPublisher
+	storage        ports.FileStorageRepository
+	bucket         string
+	videoRepo      ports.VideoRepository
+	uploadRepo     ports.UploadRepository
+	uploadStepRepo ports.UploadStepRepository
+	renditionRepo  ports.RenditionRepository
 }
 
-func NewUploadService(storage ports.FileStorageRepository, bucket string, videoRepo ports.VideoRepository, uploadRepo ports.UploadRepository, uploadStepRepo ports.UploadStepRepository, renditionRepo ports.RenditionRepository, uploadProcessPub ports.UploadProcessPublisher) *UploadService {
+func NewUploadService(storage ports.FileStorageRepository, bucket string, videoRepo ports.VideoRepository, uploadRepo ports.UploadRepository, uploadStepRepo ports.UploadStepRepository, renditionRepo ports.RenditionRepository) *UploadService {
 	return &UploadService{
-		storage:          storage,
-		bucket:           bucket,
-		videoRepo:        videoRepo,
-		uploadRepo:       uploadRepo,
-		uploadStepRepo:   uploadStepRepo,
-		renditionRepo:    renditionRepo,
-		uploadProcessPub: uploadProcessPub,
+		storage:        storage,
+		bucket:         bucket,
+		videoRepo:      videoRepo,
+		uploadRepo:     uploadRepo,
+		uploadStepRepo: uploadStepRepo,
+		renditionRepo:  renditionRepo,
 	}
 }
 
@@ -116,6 +115,8 @@ func (s *UploadService) RequestPresignURL(ctx context.Context, userID, title str
 var ErrFinalizeUpload = errors.New("cannot finalize upload")
 var ErrFinalizeUploadMissingFile = errors.New("file not found in storage; upload the file to the presigned URL before finalizing")
 
+const uploadProcessStartEventType = "upload_process_start"
+
 func (s *UploadService) FinalizeUpload(ctx context.Context, videoID string) error {
 	if videoID == "" {
 		return fmt.Errorf("%w: video_id is required", ErrFinalizeUpload)
@@ -138,11 +139,12 @@ func (s *UploadService) FinalizeUpload(ctx context.Context, videoID string) erro
 	upload.StoragePath = storagePath
 	upload.Status = entities.UploadStatusProcessing
 	upload.UpdatedAt = time.Now()
-	if err := s.uploadRepo.Update(ctx, upload); err != nil {
-		return fmt.Errorf("update upload: %w", err)
+	msgPayload, err := json.Marshal(map[string]string{"upload_id": upload.ID})
+	if err != nil {
+		return fmt.Errorf("marshal outbox payload: %w", err)
 	}
-	if err := s.uploadProcessPub.PublishUploadProcess(ctx, upload.ID); err != nil {
-		return fmt.Errorf("publish to upload-process queue: %w", err)
+	if err := s.uploadRepo.FinalizeProcessingWithOutbox(ctx, upload, uploadProcessStartEventType, upload.ID, msgPayload); err != nil {
+		return fmt.Errorf("update upload: %w", err)
 	}
 	return nil
 }

@@ -11,6 +11,7 @@ type UploadRepository interface {
 	GetByVideoID(ctx context.Context, videoID string) (*entities.Upload, error)
 	GetByID(ctx context.Context, uploadID string) (*entities.Upload, error)
 	Update(ctx context.Context, u *entities.Upload) error
+	FinalizeProcessingWithOutbox(ctx context.Context, u *entities.Upload, eventType, idempotencyKey string, payload []byte) error
 	UpdateStatus(ctx context.Context, uploadID, status string) error
 	ListAll(ctx context.Context, limit int) ([]*entities.Upload, error)
 	ListExpiredPending(ctx context.Context, limit int) ([]*entities.Upload, error)

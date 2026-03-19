@@ -15,7 +15,6 @@ import (
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
 	"github.com/LgAcerbi/go-video-upload/pkg/metrics"
-	"github.com/LgAcerbi/go-video-upload/pkg/rabbitmq"
 	"github.com/LgAcerbi/go-video-upload/proto/upload"
 	_ "github.com/LgAcerbi/go-video-upload/services/upload/docs"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/grpc"
@@ -23,7 +22,6 @@ import (
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http/middleware"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http/routes"
 	objectstorage "github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/object-storage"
-	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/rabbitmq"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/postgres"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
@@ -100,15 +98,6 @@ func main() {
 	uploadRepo := postgres.NewUploadRepository(pool)
 	uploadStepRepo := postgres.NewUploadStepRepository(pool)
 
-	rabbitCfg := rabbitmq.ConfigFromEnv()
-	rabbitConn, err := rabbitmq.Connect(rabbitCfg)
-	if err != nil {
-		log.Fatal("rabbitmq connection failed", "error", err)
-	}
-	defer rabbitConn.Close()
-
-	uploadProcessPub := amqp.NewRabbitMQUploadProcessPublisher(rabbitConn)
-
 	metricsWriter, metricsErr := metrics.NewWriter(metrics.WriterConfig{
 		URL:    os.Getenv("INFLUXDB_URL"),
 		Token:  os.Getenv("INFLUXDB_TOKEN"),
@@ -122,7 +111,7 @@ func main() {
 		defer metricsWriter.Close()
 	}
 
-	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo, uploadStepRepo, renditionRepo, uploadProcessPub)
+	uploadSvc := service.NewUploadService(storage, bucket, videoRepo, uploadRepo, uploadStepRepo, renditionRepo)
 	playbackBaseURL := envOrDefault("PLAYBACK_BASE_URL", os.Getenv("S3_PRESIGN_ENDPOINT"))
 	uploadController := controller.NewUploadController(uploadSvc, log, playbackBaseURL)
 

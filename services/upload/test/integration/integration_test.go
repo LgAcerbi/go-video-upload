@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -31,39 +30,26 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/LgAcerbi/go-video-upload/pkg/logger"
-	controller "github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http"
+	uploadpb "github.com/LgAcerbi/go-video-upload/proto/upload"
 	grpcserver "github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/grpc"
+	controller "github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http/middleware"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/http/routes"
 	objectstorage "github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/object-storage"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/adapters/postgres"
 	"github.com/LgAcerbi/go-video-upload/services/upload/internal/application/ports"
 	uploadservice "github.com/LgAcerbi/go-video-upload/services/upload/internal/application/services"
-	uploadpb "github.com/LgAcerbi/go-video-upload/proto/upload"
 )
 
 const (
-	testBucket     = "test-bucket"
-	testAPIKey     = "test-api-key"
-	dbName         = "upload_test"
-	dbUser         = "test"
-	dbPassword     = "test"
+	testBucket = "test-bucket"
+	testAPIKey = "test-api-key"
+	dbName     = "upload_test"
+	dbUser     = "test"
+	dbPassword = "test"
 )
 
-// recordUploadProcessPublisher implements ports.UploadProcessPublisher and records published upload IDs for assertions.
-type recordUploadProcessPublisher struct {
-	mu           sync.Mutex
-	publishedIDs []string
-}
-
-func (r *recordUploadProcessPublisher) PublishUploadProcess(ctx context.Context, uploadID string) error {
-	r.mu.Lock()
-	r.publishedIDs = append(r.publishedIDs, uploadID)
-	r.mu.Unlock()
-	return nil
-}
-
-func setupIntegration(t *testing.T) (baseURL string, pool *pgxpool.Pool, uploadRepo ports.UploadRepository, videoRepo ports.VideoRepository, pubRecorder *recordUploadProcessPublisher, grpcClient uploadpb.UploadStateServiceClient, cleanup func()) {
+func setupIntegration(t *testing.T) (baseURL string, pool *pgxpool.Pool, uploadRepo ports.UploadRepository, videoRepo ports.VideoRepository, grpcClient uploadpb.UploadStateServiceClient, cleanup func()) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -123,9 +109,7 @@ func setupIntegration(t *testing.T) (baseURL string, pool *pgxpool.Pool, uploadR
 	uploadRepo = postgres.NewUploadRepository(pool)
 	uploadStepRepo := postgres.NewUploadStepRepository(pool)
 	renditionRepo := postgres.NewRenditionRepository(pool)
-	pubRecorder = &recordUploadProcessPublisher{}
-
-	uploadSvc := uploadservice.NewUploadService(storage, testBucket, videoRepo, uploadRepo, uploadStepRepo, renditionRepo, pubRecorder)
+	uploadSvc := uploadservice.NewUploadService(storage, testBucket, videoRepo, uploadRepo, uploadStepRepo, renditionRepo)
 	log := logger.New(&logger.Config{Service: "upload"})
 	uploadController := controller.NewUploadController(uploadSvc, log, minioURL)
 
@@ -160,7 +144,7 @@ func setupIntegration(t *testing.T) (baseURL string, pool *pgxpool.Pool, uploadR
 		_ = pgCtr.Terminate(ctx)
 		_ = minioCtr.Terminate(ctx)
 	}
-	return baseURL, pool, uploadRepo, videoRepo, pubRecorder, grpcClient, cleanup
+	return baseURL, pool, uploadRepo, videoRepo, grpcClient, cleanup
 }
 
 func createMinIOBucket(t *testing.T, ctx context.Context, endpoint string) {
@@ -191,7 +175,7 @@ func createMinIOBucket(t *testing.T, ctx context.Context, endpoint string) {
 }
 
 func TestPresign_Integration(t *testing.T) {
-	baseURL, _, uploadRepo, videoRepo, _, _, cleanup := setupIntegration(t)
+	baseURL, _, uploadRepo, videoRepo, _, cleanup := setupIntegration(t)
 	defer cleanup()
 
 	userID := uuid.New().String()
@@ -249,7 +233,7 @@ func TestPresign_Integration(t *testing.T) {
 }
 
 func TestPresignAndFinalize_Integration(t *testing.T) {
-	baseURL, pool, _, _, pubRecorder, _, cleanup := setupIntegration(t)
+	baseURL, pool, _, _, _, cleanup := setupIntegration(t)
 	defer cleanup()
 
 	userID := uuid.New().String()
@@ -316,15 +300,39 @@ func TestPresignAndFinalize_Integration(t *testing.T) {
 		t.Error("upload storage_path empty")
 	}
 
-	// 5. Assert outbound: upload-process message published with correct upload ID
-	pubRecorder.mu.Lock()
-	ids := append([]string(nil), pubRecorder.publishedIDs...)
-	pubRecorder.mu.Unlock()
-	if len(ids) != 1 {
-		t.Fatalf("published upload IDs: got %d, want 1", len(ids))
+	// 5. Assert outbox intent persisted for dispatcher
+	var (
+		eventType      string
+		idempotencyKey string
+		status         string
+		payloadText    string
+	)
+	err = pool.QueryRow(ctx, `
+		SELECT event_type, idempotency_key, status, payload::text
+		FROM outbox_events
+		WHERE event_type = 'upload_process_start'
+		ORDER BY created_at DESC
+		LIMIT 1`).Scan(&eventType, &idempotencyKey, &status, &payloadText)
+	if err != nil {
+		t.Fatalf("query outbox event: %v", err)
 	}
-	if ids[0] != upload.ID {
-		t.Errorf("published upload_id: got %q, want %q", ids[0], upload.ID)
+	if eventType != "upload_process_start" {
+		t.Fatalf("event_type: got %q", eventType)
+	}
+	if idempotencyKey != upload.ID {
+		t.Fatalf("idempotency_key: got %q, want %q", idempotencyKey, upload.ID)
+	}
+	if status != "pending" {
+		t.Fatalf("status: got %q, want pending", status)
+	}
+	var payloadObj struct {
+		UploadID string `json:"upload_id"`
+	}
+	if err := json.Unmarshal([]byte(payloadText), &payloadObj); err != nil {
+		t.Fatalf("decode outbox payload: %v", err)
+	}
+	if payloadObj.UploadID != upload.ID {
+		t.Fatalf("outbox payload upload_id: got %q, want %q", payloadObj.UploadID, upload.ID)
 	}
 }
 
@@ -359,7 +367,7 @@ func presignAndGetIDs(t *testing.T, baseURL string, uploadRepo ports.UploadRepos
 }
 
 func TestGrpc_GetUploadProcessingContext_Integration(t *testing.T) {
-	baseURL, _, uploadRepo, _, _, grpcClient, cleanup := setupIntegration(t)
+	baseURL, _, uploadRepo, _, grpcClient, cleanup := setupIntegration(t)
 	defer cleanup()
 
 	_, uploadID := presignAndGetIDs(t, baseURL, uploadRepo)
@@ -381,7 +389,7 @@ func TestGrpc_GetUploadProcessingContext_Integration(t *testing.T) {
 }
 
 func TestGrpc_GetUploadProcessingContext_NotFound_Integration(t *testing.T) {
-	_, _, _, _, _, grpcClient, cleanup := setupIntegration(t)
+	_, _, _, _, grpcClient, cleanup := setupIntegration(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -395,7 +403,7 @@ func TestGrpc_GetUploadProcessingContext_NotFound_Integration(t *testing.T) {
 }
 
 func TestGrpc_CreateUploadSteps_UpdateUploadStep_UpdateUploadStatus_Integration(t *testing.T) {
-	baseURL, _, uploadRepo, _, _, grpcClient, cleanup := setupIntegration(t)
+	baseURL, _, uploadRepo, _, grpcClient, cleanup := setupIntegration(t)
 	defer cleanup()
 
 	_, uploadID := presignAndGetIDs(t, baseURL, uploadRepo)
@@ -454,7 +462,7 @@ func TestGrpc_CreateUploadSteps_UpdateUploadStep_UpdateUploadStatus_Integration(
 }
 
 func TestGrpc_UpdateUploadStep_InvalidTransitions_Integration(t *testing.T) {
-	baseURL, _, uploadRepo, _, _, grpcClient, cleanup := setupIntegration(t)
+	baseURL, _, uploadRepo, _, grpcClient, cleanup := setupIntegration(t)
 	defer cleanup()
 
 	_, uploadID := presignAndGetIDs(t, baseURL, uploadRepo)
@@ -539,7 +547,7 @@ func TestGrpc_UpdateUploadStep_InvalidTransitions_Integration(t *testing.T) {
 }
 
 func TestGrpc_UpdateVideoMetadata_UpdateVideoThumbnail_Integration(t *testing.T) {
-	baseURL, _, uploadRepo, videoRepo, _, grpcClient, cleanup := setupIntegration(t)
+	baseURL, _, uploadRepo, videoRepo, grpcClient, cleanup := setupIntegration(t)
 	defer cleanup()
 
 	videoID, _ := presignAndGetIDs(t, baseURL, uploadRepo)
@@ -567,8 +575,8 @@ func TestGrpc_UpdateVideoMetadata_UpdateVideoThumbnail_Integration(t *testing.T)
 	}
 
 	_, err = grpcClient.UpdateVideoThumbnail(ctx, &uploadpb.UpdateVideoThumbnailRequest{
-		VideoId:               videoID,
-		ThumbnailStoragePath:  "videos/" + videoID + "/thumb.jpg",
+		VideoId:              videoID,
+		ThumbnailStoragePath: "videos/" + videoID + "/thumb.jpg",
 	})
 	if err != nil {
 		t.Fatalf("UpdateVideoThumbnail: %v", err)
@@ -580,7 +588,7 @@ func TestGrpc_UpdateVideoMetadata_UpdateVideoThumbnail_Integration(t *testing.T)
 }
 
 func TestGrpc_CreateRenditions_UpdateRendition_List_Integration(t *testing.T) {
-	baseURL, _, uploadRepo, _, _, grpcClient, cleanup := setupIntegration(t)
+	baseURL, _, uploadRepo, _, grpcClient, cleanup := setupIntegration(t)
 	defer cleanup()
 
 	videoID, _ := presignAndGetIDs(t, baseURL, uploadRepo)
@@ -642,7 +650,7 @@ func TestGrpc_CreateRenditions_UpdateRendition_List_Integration(t *testing.T) {
 }
 
 func TestGrpc_UpdateVideoPlayback_Integration(t *testing.T) {
-	baseURL, _, uploadRepo, videoRepo, _, grpcClient, cleanup := setupIntegration(t)
+	baseURL, _, uploadRepo, videoRepo, grpcClient, cleanup := setupIntegration(t)
 	defer cleanup()
 
 	videoID, _ := presignAndGetIDs(t, baseURL, uploadRepo)
@@ -670,7 +678,7 @@ func TestGrpc_UpdateVideoPlayback_Integration(t *testing.T) {
 }
 
 func TestGrpc_ExpireStaleUploads_Integration(t *testing.T) {
-	_, _, _, _, _, grpcClient, cleanup := setupIntegration(t)
+	_, _, _, _, grpcClient, cleanup := setupIntegration(t)
 	defer cleanup()
 
 	ctx := context.Background()

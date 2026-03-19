@@ -72,9 +72,38 @@ CREATE TABLE IF NOT EXISTS video_renditions (
 CREATE INDEX IF NOT EXISTS idx_video_renditions_video_id ON video_renditions (video_id);
 CREATE INDEX IF NOT EXISTS idx_video_renditions_status ON video_renditions (video_id, status) WHERE status = 'pending';
 
+CREATE TABLE IF NOT EXISTS outbox_events (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_type      VARCHAR(64) NOT NULL,
+    idempotency_key VARCHAR(128) NOT NULL,
+    payload         JSONB NOT NULL,
+    status          VARCHAR(32) NOT NULL DEFAULT 'pending',
+    attempts        INT NOT NULL DEFAULT 0,
+    next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_error      TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    sent_at         TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_outbox_event_type_idempotency_key
+    ON outbox_events (event_type, idempotency_key);
+
+CREATE INDEX IF NOT EXISTS idx_outbox_pending_next_attempt
+    ON outbox_events (next_attempt_at, created_at) WHERE status = 'pending';
+
 -- Migrations for existing DBs (safe to run multiple times).
 ALTER TABLE videos DROP COLUMN IF EXISTS width, DROP COLUMN IF EXISTS height;
 ALTER TABLE videos ADD COLUMN IF NOT EXISTS thumbnail_path VARCHAR(1024);
 ALTER TABLE videos ADD COLUMN IF NOT EXISTS hls_master_path VARCHAR(1024);
 ALTER TABLE video_renditions ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'pending';
 ALTER TABLE video_renditions ALTER COLUMN storage_path DROP NOT NULL;
+
+ALTER TABLE IF EXISTS outbox_events ADD COLUMN IF NOT EXISTS event_type VARCHAR(64);
+ALTER TABLE IF EXISTS outbox_events ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(128);
+ALTER TABLE IF EXISTS outbox_events ADD COLUMN IF NOT EXISTS payload JSONB;
+ALTER TABLE IF EXISTS outbox_events ADD COLUMN IF NOT EXISTS status VARCHAR(32) NOT NULL DEFAULT 'pending';
+ALTER TABLE IF EXISTS outbox_events ADD COLUMN IF NOT EXISTS attempts INT NOT NULL DEFAULT 0;
+ALTER TABLE IF EXISTS outbox_events ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE IF EXISTS outbox_events ADD COLUMN IF NOT EXISTS last_error TEXT;
+ALTER TABLE IF EXISTS outbox_events ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE IF EXISTS outbox_events ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;
