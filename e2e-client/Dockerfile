@@ -4,7 +4,9 @@ COPY package.json ./
 RUN npm install
 COPY . .
 ARG VITE_UPLOAD_API_URL=http://localhost:8080
+ARG VITE_UPLOAD_API_KEY=dev-token
 ENV VITE_UPLOAD_API_URL=$VITE_UPLOAD_API_URL
+ENV VITE_UPLOAD_API_KEY=$VITE_UPLOAD_API_KEY
 RUN npm run build
 
 FROM nginx:alpine

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const DEFAULT_API_URL = import.meta.env.VITE_UPLOAD_API_URL || 'http://localhost:8080'
+const DEFAULT_API_KEY = (import.meta.env.VITE_UPLOAD_API_KEY || '').trim()
 
 export default function App() {
   const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL)
@@ -16,14 +17,23 @@ export default function App() {
   const [videosLoading, setVideosLoading] = useState(false)
   const [uploadsError, setUploadsError] = useState('')
   const [videosError, setVideosError] = useState('')
+  const [apiKeyOverride, setApiKeyOverride] = useState('')
 
   const baseUrl = (apiUrl || DEFAULT_API_URL).trim().replace(/\/$/, '')
+  const effectiveApiKey = apiKeyOverride.trim() || DEFAULT_API_KEY
+
+  const apiHeaders = useCallback((includeJSONContentType = false) => {
+    const headers = {}
+    if (includeJSONContentType) headers['Content-Type'] = 'application/json'
+    if (effectiveApiKey) headers['X-Api-Key'] = effectiveApiKey
+    return headers
+  }, [effectiveApiKey])
 
   const fetchUploads = useCallback(async () => {
     setUploadsLoading(true)
     setUploadsError('')
     try {
-      const res = await fetch(`${baseUrl}/uploads`)
+      const res = await fetch(`${baseUrl}/uploads`, { headers: apiHeaders() })
       if (!res.ok) throw new Error('Failed to load uploads')
       const data = await res.json()
       setUploads(data.uploads ?? [])
@@ -33,13 +43,13 @@ export default function App() {
     } finally {
       setUploadsLoading(false)
     }
-  }, [baseUrl])
+  }, [apiHeaders, baseUrl])
 
   const fetchVideos = useCallback(async () => {
     setVideosLoading(true)
     setVideosError('')
     try {
-      const res = await fetch(`${baseUrl}/videos`)
+      const res = await fetch(`${baseUrl}/videos`, { headers: apiHeaders() })
       if (!res.ok) throw new Error('Failed to load videos')
       const data = await res.json()
       setVideos(data.videos ?? [])
@@ -49,7 +59,7 @@ export default function App() {
     } finally {
       setVideosLoading(false)
     }
-  }, [baseUrl])
+  }, [apiHeaders, baseUrl])
 
   useEffect(() => {
     fetchUploads()
@@ -70,7 +80,7 @@ export default function App() {
     try {
       const presignRes = await fetch(`${baseUrl}/videos/upload/presign`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: apiHeaders(true),
         body: JSON.stringify({ user_id: userId.trim(), title: title.trim() }),
       })
 
@@ -101,6 +111,7 @@ export default function App() {
 
       const finalizeRes = await fetch(`${baseUrl}/videos/${encodeURIComponent(videoId)}/upload/finalize`, {
         method: 'POST',
+        headers: apiHeaders(),
       })
 
       if (!finalizeRes.ok) {
@@ -168,6 +179,22 @@ export default function App() {
             required
           />
         </div>
+        <div className="formGroup">
+          <label htmlFor="apiKey">API key (optional override)</label>
+          <input
+            id="apiKey"
+            type="password"
+            value={apiKeyOverride}
+            onChange={(e) => setApiKeyOverride(e.target.value)}
+            placeholder={DEFAULT_API_KEY ? 'Using key from VITE_UPLOAD_API_KEY' : 'Set VITE_UPLOAD_API_KEY or enter key'}
+            autoComplete="off"
+          />
+        </div>
+        {!effectiveApiKey && (
+          <p className="tableStatus error">
+            No API key configured. Upload API calls requiring <code>X-Api-Key</code> will return 401.
+          </p>
+        )}
         <button type="submit" className="submit" disabled={loading}>
           {loading ? 'Uploading…' : 'Upload'}
         </button>
