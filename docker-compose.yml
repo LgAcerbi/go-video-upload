@@ -22,9 +22,9 @@ services:
       localstack:
         condition: service_healthy
     environment:
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
-      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
     volumes:
       - ./build/localstack/cors.json:/cors.json:ro
     entrypoint: >
@@ -41,11 +41,11 @@ services:
       - "8086:8086"
     environment:
       DOCKER_INFLUXDB_INIT_MODE: setup
-      DOCKER_INFLUXDB_INIT_USERNAME: admin
-      DOCKER_INFLUXDB_INIT_PASSWORD: adminadmin
-      DOCKER_INFLUXDB_INIT_ORG: acerbi-dev
-      DOCKER_INFLUXDB_INIT_BUCKET: metrics
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: acerbi-dev-influxdb-token
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_ADMIN_USER:-admin}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_ADMIN_PASSWORD:-adminadmin}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG:-acerbi-dev}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET:-metrics}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-acerbi-dev-influxdb-token}
     volumes:
       - influxdb-data:/var/lib/influxdb2
     healthcheck:
@@ -61,8 +61,8 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-admin}
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s
@@ -75,13 +75,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: admin
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      POSTGRES_DB: ${POSTGRES_DB:-admin}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d admin"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -91,7 +91,7 @@ services:
     image: migrate/migrate:latest
     volumes:
       - ./db/migrations:/migrations:ro
-    command: ["-path", "/migrations", "-database", "postgres://admin:admin@postgres:5432/admin?sslmode=disable", "up"]
+    command: ["-path", "/migrations", "-database", "postgres://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin}@postgres:5432/${POSTGRES_DB:-admin}?sslmode=disable", "up"]
     restart: "no"
     depends_on:
       postgres:
@@ -112,8 +112,8 @@ services:
     ports:
       - "3001:3000"
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana-data:/var/lib/grafana
@@ -122,7 +122,7 @@ services:
     image: migrate/migrate:latest
     volumes:
       - ./db/migrations:/migrations:ro
-    command: ["-path", "/migrations", "-database", "postgres://admin:admin@postgres:5432/admin?sslmode=disable", "up"]
+    command: ["-path", "/migrations", "-database", "postgres://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin}@postgres:5432/${POSTGRES_DB:-admin}?sslmode=disable", "up"]
     restart: "no"
     profiles:
       - tools
@@ -138,7 +138,7 @@ services:
       - "8080:8080"
       - "9090:9090"
     environment:
-      SECRET_TOKEN: dev-token
+      SECRET_TOKEN: ${API_SHARED_TOKEN:-dev-token}
       PORT: "8080"
       GRPC_PORT: "9090"
       OBJECT_STORAGE: S3
@@ -146,13 +146,13 @@ services:
       S3_PRESIGN_ENDPOINT: http://localhost:4566
       S3_REGION: us-east-1
       S3_BUCKET: videos
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
-      DATABASE_URL: postgresql://admin:admin@postgres:5432/admin
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin}@postgres:5432/${POSTGRES_DB:-admin}
       INFLUXDB_URL: http://influxdb:8086
-      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
-      INFLUXDB_ORG: acerbi-dev
-      INFLUXDB_BUCKET: metrics
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-acerbi-dev-influxdb-token}
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-acerbi-dev}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-metrics}
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -192,16 +192,16 @@ services:
       S3_ENDPOINT: http://localstack:4566
       S3_REGION: us-east-1
       S3_BUCKET: videos
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
-      RABBITMQ_USER: admin
-      RABBITMQ_PASS: admin
+      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-admin}
       INFLUXDB_URL: http://influxdb:8086
-      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
-      INFLUXDB_ORG: acerbi-dev
-      INFLUXDB_BUCKET: metrics
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-acerbi-dev-influxdb-token}
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-acerbi-dev}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-metrics}
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -235,12 +235,12 @@ services:
       UPLOAD_GRPC_TARGET: upload:9090
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
-      RABBITMQ_USER: admin
-      RABBITMQ_PASS: admin
+      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-admin}
       INFLUXDB_URL: http://influxdb:8086
-      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
-      INFLUXDB_ORG: acerbi-dev
-      INFLUXDB_BUCKET: metrics
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-acerbi-dev-influxdb-token}
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-acerbi-dev}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-metrics}
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -288,11 +288,11 @@ services:
       context: .
       dockerfile: services/outbox-dispatcher/Dockerfile
     environment:
-      DATABASE_URL: postgresql://admin:admin@postgres:5432/admin
+      DATABASE_URL: postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin}@postgres:5432/${POSTGRES_DB:-admin}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
-      RABBITMQ_USER: admin
-      RABBITMQ_PASS: admin
+      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-admin}
       OUTBOX_DISPATCHER_BATCH_LIMIT: "100"
       OUTBOX_DISPATCHER_RUN_TIMEOUT_SEC: "20"
       OUTBOX_DISPATCHER_TICK_INTERVAL_MS: "5000"
@@ -322,16 +322,16 @@ services:
       S3_ENDPOINT: http://localstack:4566
       S3_REGION: us-east-1
       S3_BUCKET: videos
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
-      RABBITMQ_USER: admin
-      RABBITMQ_PASS: admin
+      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-admin}
       INFLUXDB_URL: http://influxdb:8086
-      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
-      INFLUXDB_ORG: acerbi-dev
-      INFLUXDB_BUCKET: metrics
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-acerbi-dev-influxdb-token}
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-acerbi-dev}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-metrics}
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -366,12 +366,12 @@ services:
       S3_ENDPOINT: http://localstack:4566
       S3_REGION: us-east-1
       S3_BUCKET: videos
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
-      RABBITMQ_USER: admin
-      RABBITMQ_PASS: admin
+      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-admin}
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -403,12 +403,12 @@ services:
       S3_ENDPOINT: http://localstack:4566
       S3_REGION: us-east-1
       S3_BUCKET: videos
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
-      RABBITMQ_USER: admin
-      RABBITMQ_PASS: admin
+      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-admin}
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -440,16 +440,16 @@ services:
       S3_ENDPOINT: http://localstack:4566
       S3_REGION: us-east-1
       S3_BUCKET: videos
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: "5672"
-      RABBITMQ_USER: admin
-      RABBITMQ_PASS: admin
+      RABBITMQ_USER: ${RABBITMQ_USER:-admin}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-admin}
       INFLUXDB_URL: http://influxdb:8086
-      INFLUXDB_TOKEN: acerbi-dev-influxdb-token
-      INFLUXDB_ORG: acerbi-dev
-      INFLUXDB_BUCKET: metrics
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-acerbi-dev-influxdb-token}
+      INFLUXDB_ORG: ${INFLUXDB_ORG:-acerbi-dev}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-metrics}
     depends_on:
       db-migrate:
         condition: service_completed_successfully
@@ -480,7 +480,8 @@ services:
       context: ./e2e-client
       dockerfile: Dockerfile
       args:
-        VITE_UPLOAD_API_URL: http://localhost:8080
+        VITE_UPLOAD_API_URL: ${VITE_UPLOAD_API_URL:-http://localhost:8080}
+        VITE_UPLOAD_API_KEY: ${API_SHARED_TOKEN:-dev-token}
     ports:
       - "3000:80"
     depends_on:
