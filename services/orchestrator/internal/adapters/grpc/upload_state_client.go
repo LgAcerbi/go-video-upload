@@ -43,14 +43,22 @@ func (c *UploadStateClient) CreateUploadSteps(ctx context.Context, uploadID stri
 	return err
 }
 
-func (c *UploadStateClient) UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) error {
-	_, err := c.client.UpdateUploadStep(ctx, &upload.UpdateUploadStepRequest{
+func (c *UploadStateClient) UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) (ports.StepTransitionResult, error) {
+	resp, err := c.client.UpdateUploadStep(ctx, &upload.UpdateUploadStepRequest{
 		UploadId:     uploadID,
 		Step:         step,
 		Status:       status,
 		ErrorMessage: errorMessage,
 	})
-	return err
+	if err != nil {
+		return ports.StepTransitionResult{}, err
+	}
+	return ports.StepTransitionResult{
+		Applied:       resp.GetApplied(),
+		FromStatus:    resp.GetFromStatus(),
+		ToStatus:      resp.GetToStatus(),
+		FailureReason: resp.GetFailureReason(),
+	}, nil
 }
 
 func (c *UploadStateClient) UpdateUploadStatus(ctx context.Context, uploadID, status string) error {

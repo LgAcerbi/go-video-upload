@@ -53,15 +53,19 @@ func (s *OrchestratorService) HandleStepResult(ctx context.Context, uploadID, st
 			return err
 		}
 		for _, st := range pipelineSteps {
-			_ = s.uploadClient.UpdateUploadStep(ctx, uploadID, st, statusCanceled, errorMessage)
+			_, _ = s.uploadClient.UpdateUploadStep(ctx, uploadID, st, statusCanceled, errorMessage)
 		}
 		return nil
 	}
 	if status != statusDone {
 		return nil
 	}
-	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, step, statusDone, ""); err != nil {
+	res, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, step, statusDone, "")
+	if err != nil {
 		return err
+	}
+	if !res.Applied {
+		return nil
 	}
 	switch step {
 	case "generate_thumbnail":
@@ -83,8 +87,12 @@ func (s *OrchestratorService) HandleStepResult(ctx context.Context, uploadID, st
 }
 
 func (s *OrchestratorService) triggerStep(ctx context.Context, step, uploadID string) error {
-	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, step, statusProcessing, ""); err != nil {
+	res, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, step, statusProcessing, "")
+	if err != nil {
 		return err
+	}
+	if !res.Applied {
+		return nil
 	}
 	return s.stepPublisher.PublishStep(ctx, step, uploadID)
 }
