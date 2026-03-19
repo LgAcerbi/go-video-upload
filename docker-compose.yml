@@ -87,6 +87,16 @@ services:
       retries: 10
       start_period: 10s
 
+  db-migrate:
+    image: migrate/migrate:latest
+    volumes:
+      - ./db/migrations:/migrations:ro
+    command: ["-path", "/migrations", "-database", "postgres://admin:admin@postgres:5432/admin?sslmode=disable", "up"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   adminer:
     image: adminer:latest
     ports:
@@ -108,16 +118,11 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
 
-  # ----------------------------
-  # Tooling (run on demand)
-  # ----------------------------
   db-schema:
-    image: postgres:16-alpine
+    image: migrate/migrate:latest
     volumes:
-      - ./scripts/create_tables.sql:/scripts/create_tables.sql:ro
-    environment:
-      PGPASSWORD: admin
-    command: ["psql", "-h", "postgres", "-U", "admin", "-d", "admin", "-f", "/scripts/create_tables.sql"]
+      - ./db/migrations:/migrations:ro
+    command: ["-path", "/migrations", "-database", "postgres://admin:admin@postgres:5432/admin?sslmode=disable", "up"]
     restart: "no"
     profiles:
       - tools
@@ -125,9 +130,6 @@ services:
       postgres:
         condition: service_healthy
 
-  # ----------------------------
-  # App (start after infra)
-  # ----------------------------
   upload:
     build:
       context: .
@@ -156,6 +158,8 @@ services:
       INFLUXDB_ORG: acerbi-dev
       INFLUXDB_BUCKET: metrics
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       rabbitmq:
@@ -206,6 +210,8 @@ services:
       INFLUXDB_ORG: acerbi-dev
       INFLUXDB_BUCKET: metrics
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       upload:
         condition: service_healthy
       rabbitmq:
@@ -243,6 +249,8 @@ services:
       INFLUXDB_ORG: acerbi-dev
       INFLUXDB_BUCKET: metrics
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       upload:
         condition: service_healthy
       rabbitmq:
@@ -269,6 +277,8 @@ services:
       EXPIRER_BATCH_LIMIT: "200"
       EXPIRER_RUN_TIMEOUT_SEC: "20"
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       upload:
         condition: service_healthy
     entrypoint:
@@ -300,6 +310,8 @@ services:
       INFLUXDB_ORG: acerbi-dev
       INFLUXDB_BUCKET: metrics
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       upload:
         condition: service_healthy
       rabbitmq:
@@ -338,6 +350,8 @@ services:
       RABBITMQ_USER: admin
       RABBITMQ_PASS: admin
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       upload:
         condition: service_healthy
       rabbitmq:
@@ -373,6 +387,8 @@ services:
       RABBITMQ_USER: admin
       RABBITMQ_PASS: admin
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       upload:
         condition: service_healthy
       rabbitmq:
@@ -412,6 +428,8 @@ services:
       INFLUXDB_ORG: acerbi-dev
       INFLUXDB_BUCKET: metrics
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       upload:
         condition: service_healthy
       rabbitmq:
@@ -443,6 +461,8 @@ services:
     ports:
       - "3000:80"
     depends_on:
+      db-migrate:
+        condition: service_completed_successfully
       upload:
         condition: service_healthy
 

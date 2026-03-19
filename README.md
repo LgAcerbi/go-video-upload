@@ -15,10 +15,11 @@ Go monorepo for video-processing microservices.
 docker compose up -d --build
 ```
 
-### First-time database schema
+### Database schema / migrations
 
-Run this once (or any time you recreate the Postgres volume):
+DB migrations run automatically on every `docker compose up` (via the `db-migrate` one-shot service).
 
+If you want to run migrations manually (for debugging), you can also use:
 ```bash
 docker compose --profile tools run --rm db-schema
 ```
