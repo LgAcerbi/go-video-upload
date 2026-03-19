@@ -13,7 +13,7 @@ import (
 	"github.com/LgAcerbi/go-video-upload/services/expirer/internal/application/services"
 )
 
-const tickInterval = time.Minute
+const defaultTickInterval = time.Minute
 
 func main() {
 	log := logger.New(&logger.Config{Service: "expirer"})
@@ -38,14 +38,29 @@ func main() {
 	runCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	ticker := time.NewTicker(tickInterval)
-	defer ticker.Stop()
+	tickInterval := time.Duration(envInt("EXPIRER_TICK_INTERVAL_MS", int(defaultTickInterval/time.Millisecond))) * time.Millisecond
+	runScheduler(runCtx, log, expirerSvc, limit, timeout, tickInterval)
 
+	log.Info("expirer started", "interval", tickInterval.String(), "batch_limit", limit, "timeout", timeout.String(), "upload_target", uploadTarget)
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Info("shutting down")
+	cancel()
+}
+
+type expireRunner interface {
+	ExpireStaleUploads(ctx context.Context, limit int) (service.ExpireResult, error)
+}
+
+func runScheduler(runCtx context.Context, log logger.Logger, runner expireRunner, limit int, timeout, tickInterval time.Duration) {
+	ticker := time.NewTicker(tickInterval)
 	runOnce := func() {
 		runOnceCtx, cancel := context.WithTimeout(runCtx, timeout)
 		defer cancel()
 
-		res, err := expirerSvc.ExpireStaleUploads(runOnceCtx, limit)
+		res, err := runner.ExpireStaleUploads(runOnceCtx, limit)
 		if err != nil && runOnceCtx.Err() == nil {
 			log.Error("expire run failed", "error", err)
 			return
@@ -56,6 +71,7 @@ func main() {
 	runOnce()
 
 	go func() {
+		defer ticker.Stop()
 		for {
 			select {
 			case <-runCtx.Done():
@@ -65,14 +81,6 @@ func main() {
 			}
 		}
 	}()
-
-	log.Info("expirer started", "interval", tickInterval.String(), "batch_limit", limit, "timeout", timeout.String(), "upload_target", uploadTarget)
-
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Info("shutting down")
-	cancel()
 }
 
 func envInt(key string, defaultVal int) int {
@@ -86,4 +94,3 @@ func envInt(key string, defaultVal int) int {
 	}
 	return n
 }
-
