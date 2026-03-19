@@ -13,7 +13,8 @@ $paths = @(
   "./services/segment/test/integration",
   "./services/thumbnail/test/integration",
   "./services/publish/test/integration",
-  "./services/expirer/cmd/server"
+  "./services/expirer/cmd/server",
+  "./services/outbox-dispatcher/cmd/server"
 )
 
 foreach ($p in $paths) {

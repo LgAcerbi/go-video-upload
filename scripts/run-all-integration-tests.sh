@@ -16,6 +16,7 @@ paths=(
   "./services/thumbnail/test/integration"
   "./services/publish/test/integration"
   "./services/expirer/cmd/server"
+  "./services/outbox-dispatcher/cmd/server"
 )
 
 for p in "${paths[@]}"; do
