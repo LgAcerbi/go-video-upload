@@ -1,4 +1,4 @@
-# Go Video Upload Monorepo
+# pGo Video Upload Monorepo
 
 This repo is a **study case in Go** for building a small **video upload → process → publish** system. It stitches together several **microservices architecture** ideas so you can see them work end to end in one codebase—not production polish, but a hands-on map of common patterns.
 
@@ -10,7 +10,7 @@ This repo is a **study case in Go** for building a small **video upload → proc
 - **Transactional outbox** — `outbox_events` written in the same transaction as domain changes, then relayed to the broker by `outbox-dispatcher`
 - **Message-driven pipeline** — RabbitMQ queues/exchanges for `upload-process`, per-step work, and step completion feedback
 - **Orchestration** — orchestrator service owns pipeline steps and progression across workers
-- **Hexagonal / ports & adapters** — application ports with Postgres, AMQP, and object-storage adapters
+- **Hexagonal & Clean Architecture patterns** — application ports with Postgres, AMQP, and object-storage adapters
 - **Direct-to-object-storage uploads** — presigned URLs to S3-compatible storage so bytes bypass the API
 
 ## Quick start (run entire project)
