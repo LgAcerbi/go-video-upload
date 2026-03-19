@@ -22,6 +22,7 @@ type stepMessage struct {
 }
 
 func RunExtractMetadataConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.MetadataService, mw *metrics.Writer, log logger.Logger) error {
+	retryCfg := rabbitmq.DefaultRetryConfig()
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -32,6 +33,9 @@ func RunExtractMetadataConsumer(ctx context.Context, conn *rabbitmq.Connection, 
 		return err
 	}
 	if err := rabbitmq.DeclareQueue(ch, metadataQueueName, true); err != nil {
+		return err
+	}
+	if err := rabbitmq.DeclareRetryInfrastructure(ch, metadataQueueName, retryCfg); err != nil {
 		return err
 	}
 	if err := rabbitmq.QueueBind(ch, metadataQueueName, extractMetadataKey, pipelineStepsExchange); err != nil {
@@ -57,7 +61,7 @@ func RunExtractMetadataConsumer(ctx context.Context, conn *rabbitmq.Connection, 
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagExtractMeta, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
 				}
-				_ = d.Nack(false, false)
+				rabbitmq.SendToDLQ(ctx, ch, d, metadataQueueName, err, log)
 				continue
 			}
 			if err := svc.ExtractMetadata(ctx, msg.UploadID); err != nil {
@@ -65,7 +69,10 @@ func RunExtractMetadataConsumer(ctx context.Context, conn *rabbitmq.Connection, 
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagExtractMeta, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
 				}
-				_ = d.Nack(false, false)
+				exhausted := rabbitmq.HandleRetry(ctx, ch, d, metadataQueueName, err, retryCfg, log)
+				if exhausted {
+					svc.ReportFailed(ctx, msg.UploadID, err)
+				}
 				continue
 			}
 			_ = d.Ack(false)
