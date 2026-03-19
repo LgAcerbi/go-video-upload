@@ -83,9 +83,13 @@ func (s *ThumbnailService) GenerateThumbnail(ctx context.Context, uploadID strin
 		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
-	if err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepGenerateThumbnail, "done", ""); err != nil {
+	stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepGenerateThumbnail, "done", "")
+	if err != nil {
 		s.reportFailed(ctx, uploadID, err)
 		return err
+	}
+	if !stepRes.Applied {
+		return nil
 	}
 	if err := s.stepPub.PublishStepResult(ctx, uploadID, stepGenerateThumbnail, "done", ""); err != nil {
 		s.reportFailed(ctx, uploadID, err)
@@ -96,7 +100,10 @@ func (s *ThumbnailService) GenerateThumbnail(ctx context.Context, uploadID strin
 
 func (s *ThumbnailService) reportFailed(ctx context.Context, uploadID string, err error) {
 	errMsg := err.Error()
-	_ = s.uploadClient.UpdateUploadStep(ctx, uploadID, stepGenerateThumbnail, models.UploadStatusFailed, errMsg)
+	stepRes, updateErr := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepGenerateThumbnail, models.UploadStatusFailed, errMsg)
+	if updateErr != nil || !stepRes.Applied {
+		return
+	}
 	_ = s.stepPub.PublishStepResult(ctx, uploadID, stepGenerateThumbnail, models.UploadStatusFailed, errMsg)
 }
 
