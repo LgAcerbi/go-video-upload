@@ -22,6 +22,7 @@ type transcodeMessage struct {
 }
 
 func RunTranscodeConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.TranscodeService, mw *metrics.Writer, log logger.Logger) error {
+	retryCfg := rabbitmq.DefaultRetryConfig()
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -32,6 +33,9 @@ func RunTranscodeConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *s
 		return err
 	}
 	if err := rabbitmq.DeclareQueue(ch, transcodeQueueName, true); err != nil {
+		return err
+	}
+	if err := rabbitmq.DeclareRetryInfrastructure(ch, transcodeQueueName, retryCfg); err != nil {
 		return err
 	}
 	if err := rabbitmq.QueueBind(ch, transcodeQueueName, transcodeKey, pipelineStepsExchange); err != nil {
@@ -57,7 +61,7 @@ func RunTranscodeConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *s
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagTranscode, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
 				}
-				_ = d.Nack(false, false)
+				rabbitmq.SendToDLQ(ctx, ch, d, transcodeQueueName, err, log)
 				continue
 			}
 			if err := svc.Transcode(ctx, msg.UploadID); err != nil {
@@ -65,7 +69,10 @@ func RunTranscodeConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *s
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagTranscode, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
 				}
-				_ = d.Nack(false, false)
+				exhausted := rabbitmq.HandleRetry(ctx, ch, d, transcodeQueueName, err, retryCfg, log)
+				if exhausted {
+					svc.ReportFailed(ctx, msg.UploadID, err)
+				}
 				continue
 			}
 			_ = d.Ack(false)
