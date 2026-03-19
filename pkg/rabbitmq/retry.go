@@ -27,16 +27,14 @@ func DefaultRetryConfig() RetryConfig {
 }
 
 func DeclareRetryInfrastructure(ch *amqp.Channel, queueName string, cfg RetryConfig) error {
-	if err := DeclareQueue(ch, queueName+".dlq", true); err != nil {
-		return err
-	}
-
+	var dlqArgs amqp.Table
 	if cfg.DLQTtl > 0 {
-		if err := DeclareQueueWithArgs(ch, queueName+".dlq", true, amqp.Table{
+		dlqArgs = amqp.Table{
 			"x-message-ttl": int32(cfg.DLQTtl / time.Millisecond),
-		}); err != nil {
-			return err
 		}
+	}
+	if err := DeclareQueueWithArgs(ch, queueName+".dlq", true, dlqArgs); err != nil {
+		return err
 	}
 
 	for idx, d := range cfg.Delays {
