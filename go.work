@@ -5,6 +5,7 @@ use (
 	./proto/upload
 	./services/expirer
 	./services/metadata
+	./services/outbox-dispatcher
 	./services/orchestrator
 	./services/publish
 	./services/segment
