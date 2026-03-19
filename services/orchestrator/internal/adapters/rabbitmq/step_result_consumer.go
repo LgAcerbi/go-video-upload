@@ -21,6 +21,7 @@ type stepResultMessage struct {
 }
 
 func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.OrchestratorService, mw *metrics.Writer, log logger.Logger) error {
+	retryCfg := rabbitmq.DefaultRetryConfig()
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -28,6 +29,9 @@ func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *
 	defer ch.Close()
 
 	if err := rabbitmq.DeclareQueue(ch, uploadProcessStepQueueName, true); err != nil {
+		return err
+	}
+	if err := rabbitmq.DeclareRetryInfrastructure(ch, uploadProcessStepQueueName, retryCfg); err != nil {
 		return err
 	}
 
@@ -50,7 +54,7 @@ func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagStepResult, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
 				}
-				_ = d.Nack(false, false)
+				rabbitmq.SendToDLQ(ctx, ch, d, uploadProcessStepQueueName, err, log)
 				continue
 			}
 			if err := svc.HandleStepResult(ctx, msg.UploadID, msg.Step, msg.Status, msg.ErrorMessage); err != nil {
@@ -58,7 +62,7 @@ func RunStepResultConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagStepResult, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
 				}
-				_ = d.Nack(false, false)
+				_ = rabbitmq.HandleRetry(ctx, ch, d, uploadProcessStepQueueName, err, retryCfg, log)
 				continue
 			}
 			_ = d.Ack(false)

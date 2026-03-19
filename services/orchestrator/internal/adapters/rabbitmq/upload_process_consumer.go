@@ -18,6 +18,7 @@ type uploadProcessMessage struct {
 }
 
 func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.OrchestratorService, mw *metrics.Writer, log logger.Logger) error {
+	retryCfg := rabbitmq.DefaultRetryConfig()
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -25,6 +26,9 @@ func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, sv
 	defer ch.Close()
 
 	if err := rabbitmq.DeclareQueue(ch, uploadProcessQueueName, true); err != nil {
+		return err
+	}
+	if err := rabbitmq.DeclareRetryInfrastructure(ch, uploadProcessQueueName, retryCfg); err != nil {
 		return err
 	}
 
@@ -47,7 +51,7 @@ func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, sv
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagUploadProcess, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
 				}
-				_ = d.Nack(false, false)
+				rabbitmq.SendToDLQ(ctx, ch, d, uploadProcessQueueName, err, log)
 				continue
 			}
 			if err := svc.ProcessUploadProcess(ctx, msg.UploadID); err != nil {
@@ -55,7 +59,7 @@ func RunUploadProcessConsumer(ctx context.Context, conn *rabbitmq.Connection, sv
 				if mw != nil {
 					mw.Record("rabbitmq_messages", map[string]string{"service": serviceTagUploadProcess, "status": "ERROR"}, map[string]interface{}{"input": string(d.Body), "error_message": err.Error()})
 				}
-				_ = d.Nack(false, false)
+				_ = rabbitmq.HandleRetry(ctx, ch, d, uploadProcessQueueName, err, retryCfg, log)
 				continue
 			}
 			_ = d.Ack(false)
