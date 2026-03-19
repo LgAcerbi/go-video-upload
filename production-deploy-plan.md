@@ -962,20 +962,22 @@ After the `infra` stack is up and PostgreSQL is healthy, run the schema migratio
 ### Option A — From the VPS
 
 ```bash
-# Copy the SQL file to the VPS (if not already there via git clone)
-scp scripts/create_tables.sql ubuntu@<VPS_IP>:~/
-
-# Run it
-docker exec -i $(docker ps -qf "name=infra-postgres") \
-  psql -U videopipe -d videopipe < ~/create_tables.sql
+# Run versioned migrations (recommended)
+docker run --rm \
+  --network vp-net \
+  -v "$(pwd)/db/migrations:/migrations:ro" \
+  migrate/migrate \
+  -path /migrations \
+  -database "postgres://videopipe:<your-password>@postgres:5432/videopipe?sslmode=disable" \
+  up
 ```
 
 ### Option B — Via Adminer
 
 1. Open `https://adminer.lgacerbi.com`
 2. Login: Server=`postgres`, User=`videopipe`, Pass=`<your-password>`, DB=`videopipe`
-3. Go to **SQL Command** and paste the contents of `scripts/create_tables.sql`
-4. Execute
+3. Go to **SQL Command** and paste the contents of `db/migrations/0001_video_upload_schema.up.sql`
+4. Execute (Note: this bypasses `migrate` version tracking; Option A is preferred.)
 
 ### Verify Tables
 
@@ -1211,7 +1213,7 @@ Use this as a final walkthrough before going live:
 - DNS propagation verified (`dig uploader.lgacerbi.com`)
 - `proxy` stack deployed — Traefik running, HTTP→HTTPS redirect working
 - `infra` stack deployed — Postgres, RabbitMQ, MinIO all healthy
-- Database schema applied (`create_tables.sql`)
+- Database schema applied (migrations)
 - `app` stack deployed — upload, orchestrator, metadata running
 - `https://uploader.lgacerbi.com/api/videos/upload/presign` returns valid JSON
 - Presigned URL domain (`s3.lgacerbi.com`) resolves and TLS works
