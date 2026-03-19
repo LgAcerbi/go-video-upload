@@ -164,15 +164,15 @@ func (s *UploadService) UpdateUploadStatus(ctx context.Context, uploadID, status
 	return s.uploadRepo.UpdateStatus(ctx, uploadID, status)
 }
 
-func (s *UploadService) UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) error {
+func (s *UploadService) UpdateUploadStep(ctx context.Context, uploadID, step, status, errorMessage string) (ports.StepTransitionResult, error) {
 	if uploadID == "" {
-		return fmt.Errorf("upload_id is required")
+		return ports.StepTransitionResult{}, fmt.Errorf("upload_id is required")
 	}
 	if step == "" {
-		return fmt.Errorf("step is required")
+		return ports.StepTransitionResult{}, fmt.Errorf("step is required")
 	}
 	if status == "" {
-		return fmt.Errorf("status is required")
+		return ports.StepTransitionResult{}, fmt.Errorf("status is required")
 	}
 	return s.uploadStepRepo.UpdateStepStatus(ctx, uploadID, step, status, errorMessage)
 }

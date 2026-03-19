@@ -411,7 +411,7 @@ func TestGrpc_CreateUploadSteps_UpdateUploadStep_UpdateUploadStatus_Integration(
 	}
 
 	// UpdateUploadStep
-	_, err = grpcClient.UpdateUploadStep(ctx, &uploadpb.UpdateUploadStepRequest{
+	stepResp, err := grpcClient.UpdateUploadStep(ctx, &uploadpb.UpdateUploadStepRequest{
 		UploadId: uploadID,
 		Step:     "extract_metadata",
 		Status:   "processing",
@@ -419,14 +419,20 @@ func TestGrpc_CreateUploadSteps_UpdateUploadStep_UpdateUploadStatus_Integration(
 	if err != nil {
 		t.Fatalf("UpdateUploadStep: %v", err)
 	}
+	if !stepResp.GetApplied() {
+		t.Fatalf("expected transition to processing to be applied, reason=%q", stepResp.GetFailureReason())
+	}
 
-	_, err = grpcClient.UpdateUploadStep(ctx, &uploadpb.UpdateUploadStepRequest{
+	stepResp, err = grpcClient.UpdateUploadStep(ctx, &uploadpb.UpdateUploadStepRequest{
 		UploadId: uploadID,
 		Step:     "extract_metadata",
 		Status:   "done",
 	})
 	if err != nil {
 		t.Fatalf("UpdateUploadStep done: %v", err)
+	}
+	if !stepResp.GetApplied() {
+		t.Fatalf("expected transition to done to be applied, reason=%q", stepResp.GetFailureReason())
 	}
 
 	// UpdateUploadStatus
@@ -444,6 +450,91 @@ func TestGrpc_CreateUploadSteps_UpdateUploadStep_UpdateUploadStatus_Integration(
 	}
 	if upload.Status != "finished" {
 		t.Errorf("upload status: got %q", upload.Status)
+	}
+}
+
+func TestGrpc_UpdateUploadStep_InvalidTransitions_Integration(t *testing.T) {
+	baseURL, _, uploadRepo, _, _, grpcClient, cleanup := setupIntegration(t)
+	defer cleanup()
+
+	_, uploadID := presignAndGetIDs(t, baseURL, uploadRepo)
+	ctx := context.Background()
+
+	_, err := grpcClient.CreateUploadSteps(ctx, &uploadpb.CreateUploadStepsRequest{
+		UploadId: uploadID,
+		Steps:    []string{"extract_metadata"},
+	})
+	if err != nil {
+		t.Fatalf("CreateUploadSteps: %v", err)
+	}
+
+	resp, err := grpcClient.UpdateUploadStep(ctx, &uploadpb.UpdateUploadStepRequest{
+		UploadId: uploadID,
+		Step:     "extract_metadata",
+		Status:   "done",
+	})
+	if err != nil {
+		t.Fatalf("UpdateUploadStep pending->done: %v", err)
+	}
+	if resp.GetApplied() {
+		t.Fatal("expected pending->done to be rejected")
+	}
+	if resp.GetFromStatus() != "pending" {
+		t.Fatalf("expected from_status=pending, got %q", resp.GetFromStatus())
+	}
+
+	resp, err = grpcClient.UpdateUploadStep(ctx, &uploadpb.UpdateUploadStepRequest{
+		UploadId: uploadID,
+		Step:     "extract_metadata",
+		Status:   "processing",
+	})
+	if err != nil {
+		t.Fatalf("UpdateUploadStep pending->processing: %v", err)
+	}
+	if !resp.GetApplied() {
+		t.Fatalf("expected pending->processing to apply, reason=%q", resp.GetFailureReason())
+	}
+
+	resp, err = grpcClient.UpdateUploadStep(ctx, &uploadpb.UpdateUploadStepRequest{
+		UploadId: uploadID,
+		Step:     "extract_metadata",
+		Status:   "done",
+	})
+	if err != nil {
+		t.Fatalf("UpdateUploadStep processing->done: %v", err)
+	}
+	if !resp.GetApplied() {
+		t.Fatalf("expected processing->done to apply, reason=%q", resp.GetFailureReason())
+	}
+
+	resp, err = grpcClient.UpdateUploadStep(ctx, &uploadpb.UpdateUploadStepRequest{
+		UploadId: uploadID,
+		Step:     "extract_metadata",
+		Status:   "done",
+	})
+	if err != nil {
+		t.Fatalf("UpdateUploadStep duplicate done: %v", err)
+	}
+	if resp.GetApplied() {
+		t.Fatal("expected duplicate done to be rejected")
+	}
+	if resp.GetFromStatus() != "done" {
+		t.Fatalf("expected from_status=done, got %q", resp.GetFromStatus())
+	}
+
+	resp, err = grpcClient.UpdateUploadStep(ctx, &uploadpb.UpdateUploadStepRequest{
+		UploadId: uploadID,
+		Step:     "extract_metadata",
+		Status:   "processing",
+	})
+	if err != nil {
+		t.Fatalf("UpdateUploadStep done->processing: %v", err)
+	}
+	if resp.GetApplied() {
+		t.Fatal("expected done->processing to be rejected")
+	}
+	if resp.GetFromStatus() != "done" {
+		t.Fatalf("expected from_status=done, got %q", resp.GetFromStatus())
 	}
 }
 

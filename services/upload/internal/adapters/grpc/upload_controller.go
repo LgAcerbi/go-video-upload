@@ -66,10 +66,16 @@ func (c *UploadStateController) UpdateUploadStep(ctx context.Context, req *uploa
 	if req.Status == "" {
 		return nil, status.Error(codes.InvalidArgument, "status is required")
 	}
-	if err := c.svc.UpdateUploadStep(ctx, req.UploadId, req.Step, req.Status, req.ErrorMessage); err != nil {
+	res, err := c.svc.UpdateUploadStep(ctx, req.UploadId, req.Step, req.Status, req.ErrorMessage)
+	if err != nil {
 		return nil, err
 	}
-	return &upload.UpdateUploadStepResponse{}, nil
+	return &upload.UpdateUploadStepResponse{
+		Applied:       res.Applied,
+		FromStatus:    res.FromStatus,
+		ToStatus:      res.ToStatus,
+		FailureReason: res.FailureReason,
+	}, nil
 }
 
 func (c *UploadStateController) UpdateVideoMetadata(ctx context.Context, req *upload.UpdateVideoMetadataRequest) (*upload.UpdateVideoMetadataResponse, error) {
