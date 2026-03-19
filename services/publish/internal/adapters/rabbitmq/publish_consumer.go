@@ -20,6 +20,7 @@ type publishMessage struct {
 }
 
 func RunPublishConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *service.PublishService, log logger.Logger) error {
+	retryCfg := rabbitmq.DefaultRetryConfig()
 	ch, err := conn.Channel()
 	if err != nil {
 		return err
@@ -30,6 +31,9 @@ func RunPublishConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *ser
 		return err
 	}
 	if err := rabbitmq.DeclareQueue(ch, publishQueueName, true); err != nil {
+		return err
+	}
+	if err := rabbitmq.DeclareRetryInfrastructure(ch, publishQueueName, retryCfg); err != nil {
 		return err
 	}
 	if err := rabbitmq.QueueBind(ch, publishQueueName, publishKey, pipelineStepsExchange); err != nil {
@@ -52,12 +56,15 @@ func RunPublishConsumer(ctx context.Context, conn *rabbitmq.Connection, svc *ser
 			var msg publishMessage
 			if err := json.Unmarshal(d.Body, &msg); err != nil {
 				log.Error("invalid publish message", "error", err, "body", string(d.Body))
-				_ = d.Nack(false, false)
+				rabbitmq.SendToDLQ(ctx, ch, d, publishQueueName, err, log)
 				continue
 			}
 			if err := svc.Publish(ctx, msg.UploadID); err != nil {
 				log.Error("publish failed", "upload_id", msg.UploadID, "error", err)
-				_ = d.Nack(false, false)
+				exhausted := rabbitmq.HandleRetry(ctx, ch, d, publishQueueName, err, retryCfg, log)
+				if exhausted {
+					svc.ReportFailed(ctx, msg.UploadID, err)
+				}
 				continue
 			}
 			_ = d.Ack(false)

@@ -13,10 +13,10 @@ const stepPublish = "publish"
 
 // bandwidthByResolution is a rough default bandwidth in bps for master playlist.
 var bandwidthByResolution = map[string]int{
-	"360p":  800000,
-	"480p":  1400000,
-	"720p":  2500000,
-	"1080p": 5000000,
+	"360p":     800000,
+	"480p":     1400000,
+	"720p":     2500000,
+	"1080p":    5000000,
 	"original": 4000000,
 }
 
@@ -44,19 +44,16 @@ func NewPublishService(
 func (s *PublishService) Publish(ctx context.Context, uploadID string) error {
 	ctxData, err := s.uploadClient.GetUploadProcessingContext(ctx, uploadID)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	videoID := ctxData.VideoID
 
 	ready, err := s.uploadClient.ListReadyRenditions(ctx, videoID)
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	if len(ready) == 0 {
 		e := fmt.Errorf("no ready renditions to publish")
-		s.reportFailed(ctx, uploadID, e)
 		return e
 	}
 
@@ -76,17 +73,14 @@ func (s *PublishService) Publish(ctx context.Context, uploadID string) error {
 
 	masterKey := "videos/" + videoID + "/hls/master.m3u8"
 	if err := s.uploader.UploadMasterPlaylist(ctx, s.bucket, masterKey, masterContent); err != nil {
-		s.reportFailed(ctx, uploadID, fmt.Errorf("upload master playlist: %w", err))
 		return err
 	}
 
 	if err := s.uploadClient.UpdateVideoPlayback(ctx, videoID, masterKey); err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	stepRes, err := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepPublish, "done", "")
 	if err != nil {
-		s.reportFailed(ctx, uploadID, err)
 		return err
 	}
 	if !stepRes.Applied {
@@ -95,7 +89,7 @@ func (s *PublishService) Publish(ctx context.Context, uploadID string) error {
 	return s.stepPub.PublishStepResult(ctx, uploadID, stepPublish, "done", "")
 }
 
-func (s *PublishService) reportFailed(ctx context.Context, uploadID string, err error) {
+func (s *PublishService) ReportFailed(ctx context.Context, uploadID string, err error) {
 	errMsg := err.Error()
 	stepRes, updateErr := s.uploadClient.UpdateUploadStep(ctx, uploadID, stepPublish, models.UploadStatusFailed, errMsg)
 	_ = s.uploadClient.UpdateUploadStatus(ctx, uploadID, models.UploadStatusFailed)
