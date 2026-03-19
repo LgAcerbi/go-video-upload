@@ -8,11 +8,32 @@ Go monorepo for video-processing microservices.
 
 - Docker Desktop (Docker Compose v2)
 
+### Non-production defaults
+
+This repository ships with development-friendly defaults in `docker-compose.yml` (for example admin credentials and dev tokens). Before using it on shared machines, VPNs, or any public network:
+
+- copy `.env.example` to `.env` and set strong secrets
+- do not expose infrastructure ports unless you need host access
+- rotate credentials/tokens from local defaults
+
 ### Start
 
 ```bash
 # From repo root
 docker compose up -d --build
+```
+
+Optional setup for custom secrets:
+
+```bash
+cp .env.example .env
+```
+
+Optional hardened local profile (example):
+
+```bash
+# after creating docker-compose.override.yml from docker-compose.override.example.yml
+docker compose --profile internal-infra up -d --build
 ```
 
 ### Database schema / migrations
@@ -46,6 +67,10 @@ docker compose down -v
 - InfluxDB: `http://localhost:8086`
 - LocalStack (S3): `http://localhost:4566`
 - RabbitMQ UI: `http://localhost:15672` (user/pass: `admin` / `admin`)
+
+### E2E client API key note
+
+The e2e frontend now sends `X-Api-Key` using `VITE_UPLOAD_API_KEY`. In Compose, both upload `SECRET_TOKEN` and e2e `VITE_UPLOAD_API_KEY` are sourced from `API_SHARED_TOKEN` so they stay aligned. This is intended for local e2e/dev only; embedding API keys in SPA assets is not a production authentication model.
 
 ## Structure
 
