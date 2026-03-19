@@ -35,3 +35,4 @@ dist/
 .env
 .env.local
 *.local
+docker-compose.override.yml

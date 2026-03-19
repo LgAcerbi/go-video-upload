@@ -1,0 +1,26 @@
+services:
+  # Copy this file to docker-compose.override.yml for local-only customization.
+  # Example hardened local profile: keep infra internal by removing host port exposure.
+  localstack:
+    profiles: ["internal-infra"]
+    ports: []
+
+  influxdb:
+    profiles: ["internal-infra"]
+    ports: []
+
+  rabbitmq:
+    profiles: ["internal-infra"]
+    ports: []
+
+  postgres:
+    profiles: ["internal-infra"]
+    ports: []
+
+  adminer:
+    profiles: ["internal-infra"]
+    ports: []
+
+  grafana:
+    profiles: ["internal-infra"]
+    ports: []
