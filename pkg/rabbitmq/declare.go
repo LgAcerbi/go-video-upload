@@ -35,6 +35,18 @@ func DeclareQueue(ch *amqp.Channel, name string, durable bool) error {
 	return err
 }
 
+func DeclareQueueWithArgs(ch *amqp.Channel, name string, durable bool, args amqp.Table) error {
+	_, err := ch.QueueDeclare(
+		name,
+		durable,
+		false,
+		false,
+		false,
+		args,
+	)
+	return err
+}
+
 func QueueBind(ch *amqp.Channel, queue, key, exchange string) error {
 	return ch.QueueBind(
 		queue,
